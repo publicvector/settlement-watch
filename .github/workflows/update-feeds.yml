@@ -41,15 +41,7 @@ jobs:
       - name: Import dorker results
         run: |
           echo "=== Importing Dorker Results ==="
-          if [ -f /tmp/settlement_dork_results.json ]; then
-            python -c "
-from db.importers import SettlementImporter
-from db.database import get_db
-importer = SettlementImporter(get_db())
-count = importer.import_from_json('/tmp/settlement_dork_results.json')
-print(f'Imported {count} settlements from dorker')
-"
-          fi
+          python scripts/import_dorker_results.py || true
         continue-on-error: true
 
       - name: Run all state court scrapers
@@ -67,11 +59,7 @@ print(f'Imported {count} settlements from dorker')
       - name: Generate RSS feeds
         run: |
           echo "=== Generating RSS Feeds ==="
-          python -c "
-from feeds.rss_generator import RSSGenerator
-generator = RSSGenerator()
-generator.save_all_feeds()
-"
+          python -c "from feeds.rss_generator import RSSGenerator; RSSGenerator().save_all_feeds()"
 
       - name: Update last build date
         run: |
