@@ -283,13 +283,13 @@ class AlaskaScraper:
 
     async def get_case_detail(self, case_number: str) -> Dict[str, Any]:
         """
-        Get detailed case information.
+        Get detailed case information including docket entries.
 
         Args:
             case_number: The case number to retrieve
 
         Returns:
-            Dictionary with detailed case information
+            Dictionary with detailed case information and docket entries
         """
         # Search for the case first
         results = await self.search_by_case_number(case_number)
@@ -298,54 +298,156 @@ class AlaskaScraper:
 
         case = results[0]
 
-        # If there's a detail URL, navigate to it
-        if case.get('detail_url'):
-            await self.page.goto(case['detail_url'], timeout=60000)
+        # Navigate to case detail page
+        # Try clicking on the case number link in results
+        try:
+            await self.page.click(f'a:has-text("{case_number}")')
             await self.page.wait_for_load_state('networkidle')
             await self.page.wait_for_timeout(2000)
+        except:
+            # If click fails, try direct URL construction
+            if case.get('detail_url'):
+                await self.page.goto(case['detail_url'], timeout=60000)
+                await self.page.wait_for_load_state('networkidle')
+                await self.page.wait_for_timeout(2000)
 
-            # Extract detailed info from case page
-            detail = await self.page.evaluate('''() => {
-                const detail = {};
-                const content = document.body.innerText;
+        # Extract detailed info and docket entries from case page
+        detail = await self.page.evaluate('''() => {
+            const detail = {};
+            const content = document.body.innerText;
 
-                // Extract common fields
-                const fields = [
-                    'Case Number', 'Case Type', 'File Date', 'Case Status',
-                    'Judge', 'Court Location', 'Disposition', 'Disposition Date'
-                ];
+            // Extract common fields
+            const fields = [
+                'Case Number', 'Case Type', 'File Date', 'Case Status',
+                'Judge', 'Court Location', 'Disposition', 'Disposition Date'
+            ];
 
-                for (const field of fields) {
-                    const regex = new RegExp(field + '[:\\s]+([^\\n]+)', 'i');
-                    const match = content.match(regex);
-                    if (match) {
-                        const key = field.toLowerCase().replace(/\\s+/g, '_');
-                        detail[key] = match[1].trim();
+            for (const field of fields) {
+                const regex = new RegExp(field + '[:\\\\s]+([^\\\\n]+)', 'i');
+                const match = content.match(regex);
+                if (match) {
+                    const key = field.toLowerCase().replace(/\\\\s+/g, '_');
+                    detail[key] = match[1].trim();
+                }
+            }
+
+            // Extract parties
+            const parties = [];
+            document.querySelectorAll('table tr').forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 2) {
+                    const name = cells[0]?.textContent?.trim();
+                    const type = cells[1]?.textContent?.trim();
+                    if (name && type && !name.toLowerCase().includes('name')) {
+                        parties.push({ name, type });
                     }
                 }
+            });
+            if (parties.length > 0) {
+                detail.parties = parties;
+            }
 
-                // Extract parties
-                const parties = [];
-                document.querySelectorAll('table tr').forEach(row => {
-                    const cells = row.querySelectorAll('td');
-                    if (cells.length >= 2) {
-                        const name = cells[0]?.textContent?.trim();
-                        const type = cells[1]?.textContent?.trim();
-                        if (name && type && !name.toLowerCase().includes('name')) {
-                            parties.push({ name, type });
+            // Extract docket entries
+            const docketEntries = [];
+            const opinionPatterns = ['opinion', 'decision', 'judgment', 'ruling', 'verdict', 'granted', 'denied', 'dismiss'];
+            const orderPatterns = ['order', 'directive', 'mandate', 'injunction', 'sentenc'];
+
+            // Look for docket/event tables
+            document.querySelectorAll('table').forEach(table => {
+                const headerText = table.textContent?.toLowerCase() || '';
+                if (headerText.includes('docket') || headerText.includes('event') || headerText.includes('register of actions')) {
+                    table.querySelectorAll('tr').forEach((row, idx) => {
+                        const cells = row.querySelectorAll('td');
+                        if (cells.length >= 2) {
+                            const dateCell = cells[0]?.textContent?.trim() || '';
+                            const textCell = cells[1]?.textContent?.trim() || '';
+
+                            // Check if first cell looks like a date
+                            if (dateCell.match(/\\d{1,2}[\\/-]\\d{1,2}[\\/-]\\d{2,4}/)) {
+                                const entryTextLower = textCell.toLowerCase();
+                                const isOpinion = opinionPatterns.some(p => entryTextLower.includes(p));
+                                const isOrder = orderPatterns.some(p => entryTextLower.includes(p));
+
+                                docketEntries.push({
+                                    entry_number: idx,
+                                    entry_date: dateCell,
+                                    entry_text: textCell,
+                                    is_opinion: isOpinion,
+                                    is_order: isOrder,
+                                    document_url: ''
+                                });
+                            }
                         }
-                    }
-                });
-                if (parties.length > 0) {
-                    detail.parties = parties;
+                    });
                 }
+            });
 
-                return detail;
-            }''')
+            detail.docket_entries = docketEntries;
+            detail.docket_count = docketEntries.length;
+            detail.opinions = docketEntries.filter(e => e.is_opinion);
+            detail.orders = docketEntries.filter(e => e.is_order);
 
-            return {**case, **detail}
+            return detail;
+        }''')
 
-        return case
+        return {**case, **detail, 'state': 'AK'}
+
+    async def get_recent_filings(self, days: int = 7, limit: int = 50) -> List[Dict[str, Any]]:
+        """
+        Get recent docket entries from cases.
+
+        Args:
+            days: Number of days to look back
+            limit: Maximum entries to return
+
+        Returns:
+            List of recent docket entries
+        """
+        from datetime import datetime, timedelta
+
+        # Search for common names to get recent cases
+        all_entries = []
+        names = ["Smith", "Johnson", "Williams", "Brown", "Jones"]
+
+        for name in names[:3]:  # Limit to avoid too many requests
+            try:
+                results = await self.search_by_name(
+                    last_name=name,
+                    first_name="",
+                    case_type="All Cases",
+                    case_status="Open",  # Focus on open cases for recent activity
+                    limit=10
+                )
+
+                for case in results[:5]:  # Limit detail fetches per name
+                    try:
+                        detail = await self.get_case_detail(case.get('case_number', ''))
+                        for entry in detail.get('docket_entries', []):
+                            entry['case_number'] = case.get('case_number')
+                            entry['case_title'] = case.get('party_name', '')
+                            entry['state'] = 'AK'
+                            all_entries.append(entry)
+                    except Exception as e:
+                        print(f"    Error getting detail: {e}")
+
+                await asyncio.sleep(1)  # Rate limiting
+
+            except Exception as e:
+                print(f"  Error searching {name}: {e}")
+
+        # Filter to recent entries and sort
+        cutoff = datetime.now() - timedelta(days=days)
+        recent = []
+        for entry in all_entries:
+            try:
+                entry_date = datetime.strptime(entry.get('entry_date', ''), '%m/%d/%Y')
+                if entry_date >= cutoff:
+                    recent.append(entry)
+            except:
+                pass  # Skip entries with unparseable dates
+
+        recent.sort(key=lambda x: x.get('entry_date', ''), reverse=True)
+        return recent[:limit]
 
 
 async def main():

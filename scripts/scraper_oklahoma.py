@@ -176,38 +176,276 @@ class OSCNResultsParser(HTMLParser):
             self.current_cell += data
 
 
+@dataclass
+class DocketEntry:
+    """Represents a docket entry within a case."""
+    entry_date: str
+    entry_text: str
+    code: str = ""
+    entry_number: int = 0
+    amount: str = ""
+    party: str = ""
+    document_url: str = ""
+    is_opinion: bool = False
+    is_order: bool = False
+    is_filing: bool = False
+    is_hearing: bool = False
+    entry_type: str = "filing"
+
+    def __post_init__(self):
+        """Auto-detect entry type from text and code."""
+        text_lower = self.entry_text.lower()
+        code_upper = self.code.upper()
+
+        # Codes that indicate court-issued orders
+        order_codes = {'OH', 'ORD', 'ORDR', 'EPOI', 'EPO', 'JO', 'CO', 'SO', 'CTFREE'}
+
+        # Codes that indicate party filings
+        filing_codes = {'MO', 'PET', 'ANS', 'BR', 'RESP', 'MEMO', 'AFF', 'NOT', 'EPOSV'}
+
+        # Opinion patterns - judicial decisions
+        opinion_patterns = [
+            'opinion', 'judgment entered', 'verdict', 'findings of fact',
+            'conclusions of law', 'memorandum decision', 'final judgment',
+            'summary judgment granted', 'summary judgment denied',
+            'case dismissed', 'sustained', 'overruled', 'adjudicated'
+        ]
+
+        # Order patterns - court issued orders (not just mentioning "order")
+        order_start_patterns = [
+            'order ', 'order:', 'ordered', 'court order', 'judge order',
+            'it is ordered', 'the court orders', 'order granting',
+            'order denying', 'order setting', 'order on', 'order to',
+            'protective order issued', 'emergency protective order issued',
+            'injunction', 'stay granted', 'remand', 'sentenc'
+        ]
+
+        # Filing patterns - party submissions
+        filing_patterns = [
+            'motion', 'petition', 'complaint', 'answer', 'response',
+            'brief', 'memorandum', 'affidavit', 'notice of', 'subpoena',
+            'summons', 'filed', 'document available', 'served'
+        ]
+
+        # Hearing patterns
+        hearing_patterns = [
+            'hearing', 'trial', 'conference', 'arraignment', 'docket call'
+        ]
+
+        # Detect types
+        self.is_opinion = any(p in text_lower for p in opinion_patterns)
+
+        # Order detection: must start with order pattern OR be an order code
+        self.is_order = (
+            code_upper in order_codes or
+            any(text_lower.startswith(p) or f': {p}' in text_lower for p in order_start_patterns) or
+            (text_lower.startswith('order') and 'motion' not in text_lower)
+        )
+
+        # Filing detection: party submissions
+        self.is_filing = (
+            code_upper in filing_codes or
+            any(p in text_lower for p in filing_patterns)
+        ) and not self.is_order
+
+        self.is_hearing = any(p in text_lower for p in hearing_patterns)
+
+        # Set entry type (priority: opinion > order > hearing > filing)
+        if self.is_opinion:
+            self.entry_type = 'opinion'
+        elif self.is_order and not self.is_filing:
+            self.entry_type = 'order'
+        elif self.is_hearing:
+            self.entry_type = 'hearing'
+        elif self.is_filing:
+            self.entry_type = 'filing'
+        else:
+            self.entry_type = 'other'
+
+
+# Codes to filter out (fees and administrative entries)
+FEE_CODES = {
+    'DMFE', 'PFE7', 'OCISR', 'OCJC', 'OCASA', 'SSFCHSCPC', 'CCADMINCSF',
+    'CCADMIN', 'SJFIS', 'DCADMIN', 'CCRMPF', 'INDEBT', 'LLF', 'CVFEE',
+    'VJCF', 'CVMISC', 'REGFEE', 'TAXFEE', 'FINE', 'COST', 'BOND'
+}
+
+def is_fee_entry(code: str, description: str, amount: str) -> bool:
+    """Check if a docket entry is a fee/administrative entry to filter out."""
+    code_upper = code.upper()
+    desc_lower = description.lower()
+
+    # Skip if code starts with known fee prefixes
+    if any(code_upper.startswith(prefix) for prefix in ['CCADMIN', 'DCADMIN', 'PFE', 'SSF']):
+        return True
+
+    # Skip if code is in fee codes set
+    if code_upper in FEE_CODES:
+        return True
+
+    # Skip if it has an amount and description mentions fee/fund
+    if amount and ('fee' in desc_lower or 'fund' in desc_lower):
+        return True
+
+    # Skip very long codes (usually administrative)
+    if len(code) > 10:
+        return True
+
+    # Skip receipts and payment records
+    if 'receipt #' in desc_lower or 'total amount paid' in desc_lower:
+        return True
+
+    # Skip OCIS system messages
+    if 'ocis has automatically' in desc_lower:
+        return True
+
+    # Skip adjusting entries
+    if desc_lower.startswith('adjusting entry'):
+        return True
+
+    return False
+
+
 class OSCNCaseDetailParser(HTMLParser):
-    """Parse OSCN case detail page."""
+    """Parse OSCN case detail page including docket entries and events."""
 
     def __init__(self):
         super().__init__()
         self.case_info = {}
         self.in_case_style = False
-        self.in_section = ""
+        self.in_events_table = False
+        self.in_docket_table = False
+        self.in_row = False
         self.parties = []
-        self.events = []
-        self.docket_entries = []
+        self.events = []  # Scheduled hearings
+        self.docket_entries = []  # Docket filings
         self.current_text = ""
+        self.current_row = []
+        self.current_cell = ""
+        self.current_link = ""
+        self.current_table_type = None  # 'events' or 'docket'
 
     def handle_starttag(self, tag: str, attrs: List[tuple]):
         attrs_dict = dict(attrs)
+        class_attr = attrs_dict.get('class', '')
 
-        if tag == 'table' and 'caseStyle' in attrs_dict.get('class', ''):
-            self.in_case_style = True
+        if tag == 'table':
+            if 'caseStyle' in class_attr:
+                self.in_case_style = True
+            elif 'events_table' in class_attr:
+                self.in_events_table = True
+                self.current_table_type = 'events'
+            elif 'docketlist' in class_attr:
+                self.in_docket_table = True
+                self.current_table_type = 'docket'
 
-        elif tag == 'h2':
-            section_class = attrs_dict.get('class', '')
-            if 'parties' in section_class:
-                self.in_section = 'parties'
-            elif 'events' in section_class:
-                self.in_section = 'events'
-            elif 'issues' in section_class:
-                self.in_section = 'issues'
+        elif tag == 'tr' and (self.in_events_table or self.in_docket_table):
+            self.in_row = True
+            self.current_row = []
+
+        elif tag == 'td' and self.in_row:
+            self.current_cell = ""
+            self.current_link = ""
+
+        elif tag == 'a' and self.in_row:
+            href = attrs_dict.get('href', '')
+            if href:
+                self.current_link = href
+
+    def handle_endtag(self, tag: str):
+        if tag == 'table':
+            self.in_case_style = False
+            self.in_events_table = False
+            self.in_docket_table = False
+            self.current_table_type = None
+
+        elif tag == 'tr' and self.in_row:
+            self.in_row = False
+            self._process_row()
+
+        elif tag == 'td' and self.in_row:
+            self.current_row.append({
+                'text': self.current_cell.strip().replace('\xa0', ' ').replace('&nbsp;', ' '),
+                'link': self.current_link
+            })
+
+    def _process_row(self):
+        """Process a completed table row."""
+        if len(self.current_row) < 2:
+            return
+
+        if self.current_table_type == 'events':
+            self._process_events_row()
+        elif self.current_table_type == 'docket':
+            self._process_docket_row()
+
+    def _process_events_row(self):
+        """Process an events table row (scheduled hearings)."""
+        # Events format: DateTime+Event, empty, Judge, empty
+        if len(self.current_row) >= 1:
+            event_text = self.current_row[0]['text'].strip()
+            judge = self.current_row[2]['text'].strip() if len(self.current_row) > 2 else ''
+
+            if event_text and ('hearing' in event_text.lower() or 'trial' in event_text.lower() or
+                               'conference' in event_text.lower() or 'arraignment' in event_text.lower()):
+                # Parse date from event text
+                date_match = re.match(r'(\w+,\s+\w+\s+\d+,\s+\d+)', event_text)
+                entry_date = date_match.group(1) if date_match else ''
+
+                entry = DocketEntry(
+                    entry_date=entry_date,
+                    entry_text=event_text,
+                    code='HEARING',
+                    is_hearing=True,
+                    entry_type='hearing'
+                )
+                if judge:
+                    self.case_info['judge'] = judge
+                self.events.append(entry)
+
+    def _process_docket_row(self):
+        """Process a docket list row."""
+        # Docket format: Date, Code, Description, Count, empty, Amount
+        if len(self.current_row) < 3:
+            return
+
+        entry_date = self.current_row[0]['text'].strip()
+        code = self.current_row[1]['text'].strip()
+        description = self.current_row[2]['text'].strip()
+        doc_link = self.current_row[2].get('link', '')
+        count = self.current_row[3]['text'].strip() if len(self.current_row) > 3 else ''
+        amount = self.current_row[5]['text'].strip() if len(self.current_row) > 5 else ''
+
+        # Skip empty or fee entries
+        if not code or not description:
+            return
+        if is_fee_entry(code, description, amount):
+            return
+
+        # Create docket entry
+        entry = DocketEntry(
+            entry_date=entry_date,
+            entry_text=description,
+            code=code,
+            amount=amount,
+            document_url=doc_link if doc_link and 'GetDocument' in doc_link else ''
+        )
+
+        # Entry number from count field
+        if count and count.isdigit():
+            entry.entry_number = int(count)
+
+        self.docket_entries.append(entry)
 
     def handle_data(self, data: str):
         text = data.strip()
+
+        if self.in_row:
+            self.current_cell += data
+
         if self.in_case_style and text:
             self.current_text += text + " "
+
         if text:
             # Parse judge info
             if 'Judge:' in text:
@@ -316,14 +554,14 @@ class OklahomaScraper:
 
     def get_case_details(self, case_number: str, county: str) -> Dict[str, Any]:
         """
-        Get detailed information for a specific case.
+        Get detailed information for a specific case including docket entries.
 
         Args:
             case_number: The case number (e.g., "CF-2024-123")
             county: The county database (e.g., "oklahoma", "tulsa")
 
         Returns:
-            Dictionary with case details
+            Dictionary with case details and docket entries
         """
         params = {
             'db': county.lower(),
@@ -341,15 +579,66 @@ class OklahomaScraper:
             parser = OSCNCaseDetailParser()
             parser.feed(response.text)
 
+            # Convert docket entries to dicts
+            docket_entries = [asdict(e) for e in parser.docket_entries]
+
             return {
                 'case_number': case_number,
                 'county': county,
+                'docket_entries': docket_entries,
+                'docket_count': len(docket_entries),
+                'opinions': [e for e in docket_entries if e.get('is_opinion')],
+                'orders': [e for e in docket_entries if e.get('is_order')],
                 **parser.case_info
             }
 
         except requests.RequestException as e:
             print(f"Error getting case details: {e}")
             return {}
+
+    def get_recent_filings(self, days: int = 7, county: str = "all", limit: int = 50) -> List[Dict]:
+        """
+        Search for cases with recent filings.
+
+        Args:
+            days: Number of days to look back
+            county: County to search
+            limit: Maximum cases to check
+
+        Returns:
+            List of docket entries from recent cases
+        """
+        from datetime import datetime, timedelta
+
+        # Calculate date range
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        # Search for recently filed cases
+        cases = self.search(
+            last_name="",  # Empty for all
+            county=county,
+            filed_after=start_date.strftime("%m/%d/%Y"),
+            filed_before=end_date.strftime("%m/%d/%Y"),
+            limit=limit
+        )
+
+        recent_entries = []
+        for case in cases[:20]:  # Limit detail fetches
+            try:
+                details = self.get_case_details(case.case_number, case.county.lower())
+                for entry in details.get('docket_entries', []):
+                    entry['case_number'] = case.case_number
+                    entry['case_style'] = case.style
+                    entry['county'] = case.county
+                    entry['state'] = 'OK'
+                    recent_entries.append(entry)
+            except Exception as e:
+                print(f"  Error fetching details for {case.case_number}: {e}")
+
+        # Sort by date descending
+        recent_entries.sort(key=lambda x: x.get('entry_date', ''), reverse=True)
+        return recent_entries[:limit]
 
 
 def main():
