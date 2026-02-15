@@ -1,0 +1,93 @@
+name: Update Settlement & Court Feeds
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC (1 AM EST, 10 PM PST)
+    - cron: '0 6 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  update-feeds:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install duckduckgo-search playwright aiohttp
+          playwright install chromium
+
+      - name: Initialize database
+        run: |
+          python -c "from db.database import Database; Database()"
+
+      - name: Run settlement dorker
+        run: |
+          echo "=== Running Settlement Dorker ==="
+          python scripts/settlement_dorker.py --quick 2>&1 | head -100
+        continue-on-error: true
+
+      - name: Import dorker results
+        run: |
+          echo "=== Importing Dorker Results ==="
+          if [ -f /tmp/settlement_dork_results.json ]; then
+            python -c "
+from db.importers import SettlementImporter
+from db.database import get_db
+importer = SettlementImporter(get_db())
+count = importer.import_from_json('/tmp/settlement_dork_results.json')
+print(f'Imported {count} settlements from dorker')
+"
+          fi
+        continue-on-error: true
+
+      - name: Run all state court scrapers
+        run: |
+          echo "=== Running State Court Scrapers ==="
+          cd scripts && timeout 900 python run_all_scrapers.py 2>&1 || true
+        continue-on-error: true
+
+      - name: Import state court data
+        run: |
+          echo "=== Importing State Court Data ==="
+          python scripts/import_state_cases.py 2>&1 || true
+        continue-on-error: true
+
+      - name: Generate RSS feeds
+        run: |
+          echo "=== Generating RSS Feeds ==="
+          python -c "
+from feeds.rss_generator import RSSGenerator
+generator = RSSGenerator()
+generator.save_all_feeds()
+"
+
+      - name: Update last build date
+        run: |
+          echo "=== Updating Build Timestamp ==="
+          DATE=$(date -u +"%a, %d %b %Y %H:%M:%S +0000")
+          sed -i "s|<lastBuildDate>.*</lastBuildDate>|<lastBuildDate>$DATE</lastBuildDate>|g" docs/feed.xml || true
+
+      - name: Show database stats
+        run: |
+          echo "=== Database Stats ==="
+          python manage.py stats -v
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add docs/feeds/ docs/feed.xml db/settlement_watch.db || true
+          git diff --staged --quiet || git commit -m "Auto-update feeds $(date -u +%Y-%m-%d)"
+          git push
