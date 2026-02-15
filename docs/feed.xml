@@ -2,11 +2,11 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Settlement Watch - Legal Settlement Feed</title>
-    <link>https://yourusername.github.io/pacer_api_rss_demo/</link>
+    <link>https://publicvector.github.io/settlement-watch/</link>
     <description>Aggregated legal settlement discoveries from federal courts, state courts, and regulatory filings. Covering 15 state court systems and 94 federal districts.</description>
     <language>en-us</language>
     <lastBuildDate>Sat, 15 Feb 2026 12:00:00 +0000</lastBuildDate>
-    <atom:link href="https://yourusername.github.io/pacer_api_rss_demo/feed.xml" rel="self" type="application/rss+xml"/>
+    <atom:link href="https://publicvector.github.io/settlement-watch/feed.xml" rel="self" type="application/rss+xml"/>
 
     <item>
       <title><![CDATA[[$8.9 Billion] Johnson & Johnson Talc Settlement]]></title>

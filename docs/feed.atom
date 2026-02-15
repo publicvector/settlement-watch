@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>Settlement Watch - Legal Settlement Feed</title>
-  <link href="https://yourusername.github.io/pacer_api_rss_demo/"/>
-  <link href="https://yourusername.github.io/pacer_api_rss_demo/feed.atom" rel="self"/>
+  <link href="https://publicvector.github.io/settlement-watch/"/>
+  <link href="https://publicvector.github.io/settlement-watch/feed.atom" rel="self"/>
   <updated>2026-02-15T12:00:00Z</updated>
-  <id>https://yourusername.github.io/pacer_api_rss_demo/</id>
+  <id>https://publicvector.github.io/settlement-watch/</id>
   <subtitle>Legal settlement discoveries from federal and state courts</subtitle>
 
   <entry>
