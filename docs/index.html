@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settlement Watch - Legal Settlement Tracker</title>
+    <title>Settlement Watch - Recent Legal Settlements</title>
     <link rel="alternate" type="application/rss+xml" title="Settlement Watch RSS" href="feed.xml">
     <style>
         :root {
@@ -14,6 +14,7 @@
             --accent: #2563eb;
             --border: #e5e7eb;
             --green: #059669;
+            --red: #dc2626;
         }
         @media (prefers-color-scheme: dark) {
             :root {
@@ -24,160 +25,99 @@
                 --accent: #3b82f6;
                 --border: #2a2a2a;
                 --green: #10b981;
+                --red: #f87171;
             }
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
             padding: 2rem 1rem;
         }
-        .container { max-width: 800px; margin: 0 auto; }
+        .container { max-width: 700px; margin: 0 auto; }
+        header { margin-bottom: 1.5rem; }
+        h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .tagline { color: var(--text-muted); }
+        .updated { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; }
+        .updated time { color: var(--accent); }
 
-        header { margin-bottom: 2rem; }
-        h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-        .tagline { color: var(--text-muted); font-size: 1.1rem; }
-
-        .subscribe-bar {
+        .subscribe {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 2rem;
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 1rem;
+            font-size: 0.9rem;
         }
-        .subscribe-bar span { font-weight: 500; }
-        .subscribe-links { display: flex; gap: 0.75rem; }
-        .subscribe-links a {
+        .subscribe a {
             background: var(--accent);
             color: white;
             text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
             font-weight: 500;
         }
-        .subscribe-links a:hover { opacity: 0.9; }
-        .subscribe-links a.secondary {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .stat {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1.25rem;
-            text-align: center;
-        }
-        .stat-value { font-size: 1.75rem; font-weight: 700; color: var(--accent); }
-        .stat-label { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; }
-
-        h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .settlement-list { list-style: none; }
         .settlement {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1.25rem;
-            margin-bottom: 0.75rem;
-            transition: border-color 0.2s;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
         }
-        .settlement:hover { border-color: var(--accent); }
-
-        .settlement-header {
+        .settlement:last-child { border-bottom: none; }
+        .settlement-row {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: baseline;
             gap: 1rem;
-            margin-bottom: 0.5rem;
         }
         .settlement-title {
             font-weight: 600;
-            font-size: 1.05rem;
             color: var(--text);
+            text-decoration: none;
+            flex: 1;
         }
+        .settlement-title:hover { color: var(--accent); }
         .settlement-amount {
             font-weight: 700;
-            font-size: 1.1rem;
             color: var(--green);
             white-space: nowrap;
+            font-size: 1.1rem;
         }
-
-        .settlement-desc {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin-bottom: 0.75rem;
-        }
-
         .settlement-meta {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
+            margin-top: 0.35rem;
             font-size: 0.85rem;
-        }
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 0.35rem;
             color: var(--text-muted);
         }
-        .meta-item svg { width: 14px; height: 14px; opacity: 0.7; }
-        .settlement-link {
-            color: var(--accent);
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .settlement-link:hover { text-decoration: underline; }
-
-        .category-tag {
+        .tag {
             display: inline-block;
             background: var(--bg);
             border: 1px solid var(--border);
-            padding: 0.2rem 0.6rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            color: var(--text-muted);
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+        }
+        .new-tag {
+            background: var(--red);
+            color: white;
+            border: none;
         }
 
         footer {
-            margin-top: 3rem;
-            padding-top: 1.5rem;
+            margin-top: 2rem;
+            padding-top: 1rem;
             border-top: 1px solid var(--border);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
         }
         footer a { color: var(--accent); text-decoration: none; }
-        footer a:hover { text-decoration: underline; }
 
-        @media (max-width: 600px) {
-            .stats { grid-template-columns: 1fr; }
-            .settlement-header { flex-direction: column; gap: 0.5rem; }
-            .subscribe-bar { flex-direction: column; text-align: center; }
+        @media (max-width: 500px) {
+            .settlement-row { flex-direction: column; gap: 0.25rem; }
         }
     </style>
 </head>
@@ -185,205 +125,178 @@
     <div class="container">
         <header>
             <h1>Settlement Watch</h1>
-            <p class="tagline">Tracking major legal settlements from federal and state courts</p>
+            <p class="tagline">Recent legal settlements from courts and regulators</p>
+            <p class="updated">Last updated: <time>February 15, 2026</time></p>
         </header>
 
-        <div class="subscribe-bar">
-            <span>Subscribe to get updates:</span>
-            <div class="subscribe-links">
-                <a href="feed.xml">RSS Feed</a>
-                <a href="feed.atom" class="secondary">Atom</a>
-                <a href="settlements.json" class="secondary">JSON</a>
-            </div>
+        <div class="subscribe">
+            <span>Get updates via RSS</span>
+            <a href="feed.xml">Subscribe</a>
         </div>
 
-        <div class="stats">
-            <div class="stat">
-                <div class="stat-value">$21B+</div>
-                <div class="stat-label">Total Tracked</div>
+        <div class="settlements">
+
+            <div class="settlement">
+                <div class="settlement-row">
+                    <a href="https://apnews.com/article/harvard-trump-agreement-antisemitism" class="settlement-title">Harvard-Trump Antisemitism Settlement</a>
+                    <span class="settlement-amount">$500M</span>
+                </div>
+                <div class="settlement-meta">
+                    <span class="tag new-tag">NEW</span>
+                    <span class="tag">Education</span>
+                    Federal agreement · Feb 2026
+                </div>
             </div>
-            <div class="stat">
-                <div class="stat-value">15</div>
-                <div class="stat-label">State Courts</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value">94</div>
-                <div class="stat-label">Federal Districts</div>
-            </div>
-        </div>
 
-        <h2>Recent Settlements</h2>
-
-        <ul class="settlement-list">
-            <li class="settlement">
-                <div class="settlement-header">
-                    <span class="settlement-title">Johnson & Johnson Talc Litigation</span>
-                    <span class="settlement-amount">$8.9B</span>
-                </div>
-                <p class="settlement-desc">Global settlement resolving tens of thousands of claims alleging talc-based products caused ovarian cancer and mesothelioma.</p>
-                <div class="settlement-meta">
-                    <span class="meta-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                        MDL - Bankruptcy Court
-                    </span>
-                    <span class="category-tag">Mass Tort</span>
-                    <a href="https://www.reuters.com/legal/litigation/" class="settlement-link" target="_blank">Details →</a>
-                </div>
-            </li>
-
-            <li class="settlement">
-                <div class="settlement-header">
-                    <span class="settlement-title">3M Combat Earplugs</span>
-                    <span class="settlement-amount">$6.0B</span>
-                </div>
-                <p class="settlement-desc">Settlement for military service members who suffered hearing loss from allegedly defective Combat Arms Earplugs Version 2.</p>
-                <div class="settlement-meta">
-                    <span class="meta-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                        MDL 2885 (N.D. Fla.)
-                    </span>
-                    <span class="category-tag">Product Liability</span>
-                    <a href="https://www.3mearplugsettlement.com/" class="settlement-link" target="_blank">Details →</a>
-                </div>
-            </li>
-
-            <li class="settlement">
-                <div class="settlement-header">
-                    <span class="settlement-title">Wells Fargo Consumer Practices</span>
-                    <span class="settlement-amount">$3.7B</span>
-                </div>
-                <p class="settlement-desc">CFPB order for widespread consumer harm including fake accounts, improper mortgage fees, and illegal vehicle repossessions.</p>
-                <div class="settlement-meta">
-                    <span class="meta-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
-                        CFPB Enforcement
-                    </span>
-                    <span class="category-tag">Banking</span>
-                    <a href="https://www.consumerfinance.gov/enforcement/actions/wells-fargo-2022/" class="settlement-link" target="_blank">Details →</a>
-                </div>
-            </li>
-
-            <li class="settlement">
-                <div class="settlement-header">
-                    <span class="settlement-title">Juul Youth Marketing</span>
-                    <span class="settlement-amount">$1.2B</span>
-                </div>
-                <p class="settlement-desc">Multi-state settlement over marketing practices that allegedly targeted minors and contributed to youth vaping epidemic.</p>
-                <div class="settlement-meta">
-                    <span class="meta-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path></svg>
-                        State Attorneys General
-                    </span>
-                    <span class="category-tag">Consumer Protection</span>
-                    <a href="https://www.juulsettlement.com/" class="settlement-link" target="_blank">Details →</a>
-                </div>
-            </li>
-
-            <li class="settlement">
-                <div class="settlement-header">
-                    <span class="settlement-title">Facebook/Meta Privacy (Cambridge Analytica)</span>
-                    <span class="settlement-amount">$725M</span>
-                </div>
-                <p class="settlement-desc">Class action settlement for sharing personal data of 87 million users with Cambridge Analytica without consent.</p>
-                <div class="settlement-meta">
-                    <span class="meta-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        N.D. California
-                    </span>
-                    <span class="category-tag">Privacy</span>
-                    <a href="https://www.facebookuserprivacysettlement.com/" class="settlement-link" target="_blank">Details →</a>
-                </div>
-            </li>
-
-            <li class="settlement">
-                <div class="settlement-header">
-                    <span class="settlement-title">Equifax Data Breach</span>
+            <div class="settlement">
+                <div class="settlement-row">
+                    <a href="https://sapdc.org/capital-one-425m-class-action-settlement-2026/" class="settlement-title">Capital One Data Breach Class Action</a>
                     <span class="settlement-amount">$425M</span>
                 </div>
-                <p class="settlement-desc">FTC settlement for 2017 breach that exposed Social Security numbers and personal data of 147 million Americans.</p>
                 <div class="settlement-meta">
-                    <span class="meta-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                        FTC + Multi-State
-                    </span>
-                    <span class="category-tag">Data Breach</span>
-                    <a href="https://www.equifaxbreachsettlement.com/" class="settlement-link" target="_blank">Details →</a>
+                    <span class="tag new-tag">NEW</span>
+                    <span class="tag">Data Breach</span>
+                    Class action · Payments ongoing
                 </div>
-            </li>
+            </div>
 
-            <li class="settlement">
-                <div class="settlement-header">
-                    <span class="settlement-title">Google Location Tracking</span>
-                    <span class="settlement-amount">$392M</span>
+            <div class="settlement">
+                <div class="settlement-row">
+                    <a href="https://govtschemes.org/700-million-google-settlement-2026/" class="settlement-title">Google Play Store Antitrust Settlement</a>
+                    <span class="settlement-amount">$700M</span>
                 </div>
-                <p class="settlement-desc">Settlement with 40 states for misleading users about location tracking settings and data collection practices.</p>
                 <div class="settlement-meta">
-                    <span class="meta-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        40-State Coalition
-                    </span>
-                    <span class="category-tag">Privacy</span>
-                    <a href="https://www.googlelocationhistorysettlement.com/" class="settlement-link" target="_blank">Details →</a>
+                    <span class="tag">Antitrust</span>
+                    Class action · Claims open
                 </div>
-            </li>
+            </div>
 
-            <li class="settlement">
-                <div class="settlement-header">
-                    <span class="settlement-title">T-Mobile Data Breach</span>
-                    <span class="settlement-amount">$350M</span>
+            <div class="settlement">
+                <div class="settlement-row">
+                    <a href="https://www.lib-web.org/verizon-class-action-lawsuit-settlement-2026/" class="settlement-title">Verizon Administrative Charges Settlement</a>
+                    <span class="settlement-amount">$100M</span>
                 </div>
-                <p class="settlement-desc">Class action for August 2021 breach exposing names, SSNs, and driver's license info of 76 million customers.</p>
                 <div class="settlement-meta">
-                    <span class="meta-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                        W.D. Missouri
-                    </span>
-                    <span class="category-tag">Data Breach</span>
-                    <a href="https://www.t-mobilesettlement.com/" class="settlement-link" target="_blank">Details →</a>
+                    <span class="tag">Telecom</span>
+                    Class action · 2026
                 </div>
-            </li>
+            </div>
 
-            <li class="settlement">
-                <div class="settlement-header">
-                    <span class="settlement-title">Syngenta GMO Corn</span>
-                    <span class="settlement-amount">$300M</span>
+            <div class="settlement">
+                <div class="settlement-row">
+                    <a href="https://voice.lapaas.com/google-assistant-68-million-privacy-settlement-2026/" class="settlement-title">Google Voice Assistant Privacy Settlement</a>
+                    <span class="settlement-amount">$68M</span>
                 </div>
-                <p class="settlement-desc">Settlement for corn farmers who lost export markets when China rejected U.S. corn containing Syngenta's MIR162 trait.</p>
                 <div class="settlement-meta">
-                    <span class="meta-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"></path></svg>
-                        MDL 2591 (D. Kan.)
-                    </span>
-                    <span class="category-tag">Agriculture</span>
-                    <a href="#" class="settlement-link">Details →</a>
+                    <span class="tag">Privacy</span>
+                    Class action · Jan 2026
                 </div>
-            </li>
+            </div>
 
-            <li class="settlement">
-                <div class="settlement-header">
-                    <span class="settlement-title">McKinsey Opioid Consulting</span>
-                    <span class="settlement-amount">$230M</span>
+            <div class="settlement">
+                <div class="settlement-row">
+                    <a href="https://www.reuters.com/legal/litigation/tesla-rejected-60-million-settlement-before-losing-243-million-autopilot-verdict-2025-08-25/" class="settlement-title">Tesla Autopilot Verdict (Settlement Rejected)</a>
+                    <span class="settlement-amount">$243M</span>
                 </div>
-                <p class="settlement-desc">Settlement for McKinsey's role advising Purdue Pharma on strategies to boost OxyContin sales during the opioid crisis.</p>
                 <div class="settlement-meta">
-                    <span class="meta-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-                        Multi-State AG
-                    </span>
-                    <span class="category-tag">Opioid</span>
-                    <a href="#" class="settlement-link">Details →</a>
+                    <span class="tag">Product Liability</span>
+                    Jury verdict · Aug 2025
                 </div>
-            </li>
-        </ul>
+            </div>
+
+            <div class="settlement">
+                <div class="settlement-row">
+                    <a href="https://www.law360.com/appellate/articles/2351480" class="settlement-title">Match.com Reverse Spinoff Settlement</a>
+                    <span class="settlement-amount">$30M</span>
+                </div>
+                <div class="settlement-meta">
+                    <span class="tag">Securities</span>
+                    Delaware Chancery · 2025
+                </div>
+            </div>
+
+            <div class="settlement">
+                <div class="settlement-row">
+                    <a href="https://topclassactions.com/lawsuit-settlements/closed-settlements/23m-transunion-credit-report-dispute-class-action-settlement/" class="settlement-title">TransUnion Credit Report Dispute Settlement</a>
+                    <span class="settlement-amount">$23M</span>
+                </div>
+                <div class="settlement-meta">
+                    <span class="tag">Consumer</span>
+                    Class action · 2025
+                </div>
+            </div>
+
+            <div class="settlement">
+                <div class="settlement-row">
+                    <a href="https://wset.com/news/local/liberty-university-pays-15-million-to-former-president-falwell-jr-in-settlement-may-2025" class="settlement-title">Liberty University - Falwell Jr. Settlement</a>
+                    <span class="settlement-amount">$15M</span>
+                </div>
+                <div class="settlement-meta">
+                    <span class="tag">Employment</span>
+                    Private settlement · May 2025
+                </div>
+            </div>
+
+            <div class="settlement">
+                <div class="settlement-row">
+                    <a href="https://www.epa.gov/newsreleases/doj-and-epa-announce-95m-settlement-stericycle-inc-violations-hazardous-waste" class="settlement-title">Stericycle Hazardous Waste Settlement</a>
+                    <span class="settlement-amount">$9.5M</span>
+                </div>
+                <div class="settlement-meta">
+                    <span class="tag">Environmental</span>
+                    DOJ/EPA · 2025
+                </div>
+            </div>
+
+            <div class="settlement">
+                <div class="settlement-row">
+                    <a href="https://economictimes.indiatimes.com/news/international/us/target-ordered-to-send-out-checks-automatically-in-4-6-million-settlement-who-qualifies/articleshow/126287684.cms" class="settlement-title">Target Automatic Payment Settlement</a>
+                    <span class="settlement-amount">$4.6M</span>
+                </div>
+                <div class="settlement-meta">
+                    <span class="tag">Consumer</span>
+                    Class action · Checks mailing
+                </div>
+            </div>
+
+            <div class="settlement">
+                <div class="settlement-row">
+                    <a href="https://www.claimdepot.com/settlements/gc-data-settlement" class="settlement-title">Golden Corral Data Breach Settlement</a>
+                    <span class="settlement-amount">$1.83M</span>
+                </div>
+                <div class="settlement-meta">
+                    <span class="tag">Data Breach</span>
+                    Class action · Claims open
+                </div>
+            </div>
+
+            <div class="settlement">
+                <div class="settlement-row">
+                    <a href="https://www.claimdepot.com/settlements/case-cummins" class="settlement-title">Cummins Inc. Securities Settlement</a>
+                    <span class="settlement-amount">$1.6M</span>
+                </div>
+                <div class="settlement-meta">
+                    <span class="tag">Securities</span>
+                    Class action · 2025
+                </div>
+            </div>
+
+            <div class="settlement">
+                <div class="settlement-row">
+                    <a href="https://topclassactions.com/lawsuit-settlements/open-lawsuit-settlements/1-2m-gamespot-privacy-class-action-settlement/" class="settlement-title">GameSpot Privacy Class Action</a>
+                    <span class="settlement-amount">$1.2M</span>
+                </div>
+                <div class="settlement-meta">
+                    <span class="tag">Privacy</span>
+                    Class action · Claims open
+                </div>
+            </div>
+
+        </div>
 
         <footer>
-            <p><strong>Data Sources:</strong> PACER, CourtListener/RECAP, FTC, CFPB, SEC, State AG Offices</p>
-            <p style="margin-top: 0.5rem;"><strong>Court Coverage:</strong> Alaska, Arkansas, Colorado, Connecticut, Delaware, Indiana, Louisiana, Montana, Nevada, North Dakota, Ohio, Oklahoma, Pennsylvania, Vermont, Wisconsin + 94 Federal Districts</p>
-            <p style="margin-top: 1rem;">
-                <a href="https://github.com/publicvector/settlement-watch">GitHub</a> ·
-                <a href="feed.xml">RSS Feed</a> ·
-                <a href="settlements.json">API</a>
-            </p>
+            <p><strong>Sources:</strong> PACER, Reuters, Law360, EPA, DOJ, TopClassActions</p>
+            <p style="margin-top: 0.5rem;"><a href="feed.xml">RSS</a> · <a href="feed.atom">Atom</a> · <a href="settlements.json">JSON</a> · <a href="https://github.com/publicvector/settlement-watch">GitHub</a></p>
         </footer>
     </div>
 </body>

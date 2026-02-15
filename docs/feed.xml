@@ -1,151 +1,137 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Settlement Watch - Legal Settlement Feed</title>
+    <title>Settlement Watch</title>
     <link>https://publicvector.github.io/settlement-watch/</link>
-    <description>Aggregated legal settlement discoveries from federal courts, state courts, and regulatory filings. Covering 15 state court systems and 94 federal districts.</description>
+    <description>Recent legal settlements from courts and regulators</description>
     <language>en-us</language>
     <lastBuildDate>Sat, 15 Feb 2026 12:00:00 +0000</lastBuildDate>
     <atom:link href="https://publicvector.github.io/settlement-watch/feed.xml" rel="self" type="application/rss+xml"/>
 
     <item>
-      <title><![CDATA[[$8.9 Billion] Johnson & Johnson Talc Settlement]]></title>
-      <link>https://www.reuters.com/legal/litigation/johnson-johnson-proposes-89-billion-settlement-talc-claims-2024-05-01/</link>
-      <description><![CDATA[Settlement for talc-related cancer claims in mass tort litigation involving thousands of plaintiffs.
+      <title>[$500M] Harvard-Trump Antisemitism Settlement</title>
+      <link>https://apnews.com/article/harvard-trump-agreement-antisemitism</link>
+      <description>Harvard nearing federal settlement agreement over antisemitism claims. $500 million payment discussed.</description>
+      <pubDate>Sat, 15 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>harvard-trump-2026</guid>
+      <category>Education</category>
+    </item>
 
-Amount: $8.9 Billion
-Source: Class Action MDL
-Type: Mass Tort / Product Liability]]></description>
-      <pubDate>Wed, 01 May 2024 00:00:00 +0000</pubDate>
-      <guid isPermaLink="false">jnj-talc-2024</guid>
-      <category>Mass Tort</category>
+    <item>
+      <title>[$700M] Google Play Store Antitrust Settlement</title>
+      <link>https://govtschemes.org/700-million-google-settlement-2026/</link>
+      <description>Google settles Play Store antitrust claims. Class members may qualify for payments.</description>
+      <pubDate>Fri, 14 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>google-playstore-2026</guid>
+      <category>Antitrust</category>
+    </item>
+
+    <item>
+      <title>[$425M] Capital One Data Breach Class Action</title>
+      <link>https://sapdc.org/capital-one-425m-class-action-settlement-2026/</link>
+      <description>Capital One data breach settlement payments ongoing. Affected customers eligible.</description>
+      <pubDate>Thu, 13 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>capitalone-2026</guid>
+      <category>Data Breach</category>
+    </item>
+
+    <item>
+      <title>[$243M] Tesla Autopilot Verdict</title>
+      <link>https://www.reuters.com/legal/litigation/tesla-rejected-60-million-settlement-before-losing-243-million-autopilot-verdict-2025-08-25/</link>
+      <description>Tesla lost $243M verdict after rejecting $60M settlement offer in Autopilot case.</description>
+      <pubDate>Mon, 25 Aug 2025 00:00:00 +0000</pubDate>
+      <guid>tesla-autopilot-2025</guid>
       <category>Product Liability</category>
     </item>
 
     <item>
-      <title><![CDATA[[$6 Billion] 3M Military Earplug Settlement]]></title>
-      <link>https://www.3mearplugsettlement.com/</link>
-      <description><![CDATA[Settlement for defective combat earplugs affecting hundreds of thousands of military personnel.
-
-Amount: $6 Billion
-Source: MDL 2885 (N.D. Florida)
-Type: Product Liability / Military]]></description>
-      <pubDate>Tue, 29 Aug 2023 00:00:00 +0000</pubDate>
-      <guid isPermaLink="false">3m-earplug-2023</guid>
-      <category>Product Liability</category>
-      <category>MDL</category>
-    </item>
-
-    <item>
-      <title><![CDATA[[$3.7 Billion] Wells Fargo Fake Accounts Settlement]]></title>
-      <link>https://www.consumerfinance.gov/enforcement/actions/wells-fargo-2022/</link>
-      <description><![CDATA[CFPB settlement for unauthorized account openings, improper fees, and consumer harm.
-
-Amount: $3.7 Billion
-Source: CFPB Enforcement
-Type: Banking / Consumer Protection]]></description>
-      <pubDate>Tue, 20 Dec 2022 00:00:00 +0000</pubDate>
-      <guid isPermaLink="false">wells-fargo-cfpb-2022</guid>
-      <category>Banking</category>
-      <category>CFPB</category>
-    </item>
-
-    <item>
-      <title><![CDATA[[$1.2 Billion] Juul E-Cigarette Marketing Settlement]]></title>
-      <link>https://www.juulsettlement.com/</link>
-      <description><![CDATA[Settlement with states over youth marketing practices for e-cigarettes.
-
-Amount: $1.2 Billion
-Source: State Attorneys General
-Type: Consumer Protection / Marketing]]></description>
-      <pubDate>Wed, 12 Apr 2023 00:00:00 +0000</pubDate>
-      <guid isPermaLink="false">juul-states-2023</guid>
-      <category>Consumer Protection</category>
-      <category>State AG</category>
-    </item>
-
-    <item>
-      <title><![CDATA[[$725 Million] Facebook Privacy Settlement (Cambridge Analytica)]]></title>
-      <link>https://www.facebookuserprivacysettlement.com/</link>
-      <description><![CDATA[Class action settlement over unauthorized data sharing with Cambridge Analytica.
-
-Amount: $725 Million
-Source: Class Action (N.D. California)
-Type: Privacy / Data Protection]]></description>
-      <pubDate>Fri, 22 Sep 2023 00:00:00 +0000</pubDate>
-      <guid isPermaLink="false">facebook-privacy-2023</guid>
-      <category>Privacy</category>
-      <category>Data Protection</category>
-    </item>
-
-    <item>
-      <title><![CDATA[[$425 Million] Equifax Data Breach Settlement]]></title>
-      <link>https://www.equifaxbreachsettlement.com/</link>
-      <description><![CDATA[FTC settlement for 2017 data breach affecting 147 million consumers.
-
-Amount: $425 Million
-Source: FTC Enforcement
-Type: Data Breach / Privacy]]></description>
-      <pubDate>Fri, 01 Dec 2023 00:00:00 +0000</pubDate>
-      <guid isPermaLink="false">equifax-ftc-2023</guid>
-      <category>Data Breach</category>
-      <category>FTC</category>
-    </item>
-
-    <item>
-      <title><![CDATA[[$392 Million] Google Location Tracking Settlement]]></title>
-      <link>https://www.googlelocationhistorysettlement.com/</link>
-      <description><![CDATA[Settlement with 40 state attorneys general over deceptive location tracking practices.
-
-Amount: $392 Million
-Source: State AG Coalition
-Type: Privacy / Consumer Protection]]></description>
-      <pubDate>Tue, 14 Nov 2023 00:00:00 +0000</pubDate>
-      <guid isPermaLink="false">google-location-2023</guid>
-      <category>Privacy</category>
-      <category>State AG</category>
-    </item>
-
-    <item>
-      <title><![CDATA[[$350 Million] T-Mobile Data Breach Settlement]]></title>
-      <link>https://www.t-mobilesettlement.com/</link>
-      <description><![CDATA[Class action settlement for 2021 data breach affecting 76 million customers.
-
-Amount: $350 Million
-Source: Class Action (W.D. Missouri)
-Type: Data Breach / Privacy]]></description>
-      <pubDate>Mon, 15 Jan 2024 00:00:00 +0000</pubDate>
-      <guid isPermaLink="false">tmobile-breach-2024</guid>
-      <category>Data Breach</category>
+      <title>[$100M] Verizon Administrative Charges Settlement</title>
+      <link>https://www.lib-web.org/verizon-class-action-lawsuit-settlement-2026/</link>
+      <description>Verizon class action over administrative charges. Check eligibility.</description>
+      <pubDate>Wed, 12 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>verizon-2026</guid>
       <category>Telecom</category>
     </item>
 
     <item>
-      <title><![CDATA[[$300 Million] Syngenta GMO Corn Settlement]]></title>
-      <link>https://www.sloangmocornsettlement.com/</link>
-      <description><![CDATA[Settlement for farmers affected by GMO corn contamination and export disruptions.
-
-Amount: $300 Million
-Source: MDL 2591 (D. Kansas)
-Type: Agriculture / Product Liability]]></description>
-      <pubDate>Thu, 15 Jun 2023 00:00:00 +0000</pubDate>
-      <guid isPermaLink="false">syngenta-corn-2023</guid>
-      <category>Agriculture</category>
-      <category>MDL</category>
+      <title>[$68M] Google Voice Assistant Privacy Settlement</title>
+      <link>https://voice.lapaas.com/google-assistant-68-million-privacy-settlement-2026/</link>
+      <description>Google settles privacy claims related to Voice Assistant data collection.</description>
+      <pubDate>Mon, 20 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>google-voice-2026</guid>
+      <category>Privacy</category>
     </item>
 
     <item>
-      <title><![CDATA[[$230 Million] McKinsey Opioid Settlement]]></title>
-      <link>https://www.mckinseysettlement.com/</link>
-      <description><![CDATA[Settlement with states over consulting work for opioid manufacturers.
+      <title>[$30M] Match.com Reverse Spinoff Settlement</title>
+      <link>https://www.law360.com/appellate/articles/2351480</link>
+      <description>Match.com settles shareholder suit in Delaware Chancery Court.</description>
+      <pubDate>Fri, 07 Feb 2025 00:00:00 +0000</pubDate>
+      <guid>match-delaware-2025</guid>
+      <category>Securities</category>
+    </item>
 
-Amount: $230 Million
-Source: State Attorneys General
-Type: Opioid / Consulting]]></description>
-      <pubDate>Mon, 01 May 2023 00:00:00 +0000</pubDate>
-      <guid isPermaLink="false">mckinsey-opioid-2023</guid>
-      <category>Opioid</category>
-      <category>State AG</category>
+    <item>
+      <title>[$23M] TransUnion Credit Report Settlement</title>
+      <link>https://topclassactions.com/lawsuit-settlements/closed-settlements/23m-transunion-credit-report-dispute-class-action-settlement/</link>
+      <description>TransUnion settles credit report dispute claims.</description>
+      <pubDate>Tue, 04 Feb 2025 00:00:00 +0000</pubDate>
+      <guid>transunion-2025</guid>
+      <category>Consumer</category>
+    </item>
+
+    <item>
+      <title>[$15M] Liberty University - Falwell Jr. Settlement</title>
+      <link>https://wset.com/news/local/liberty-university-pays-15-million-to-former-president-falwell-jr-in-settlement-may-2025</link>
+      <description>Liberty University pays former president Jerry Falwell Jr. in private settlement.</description>
+      <pubDate>Thu, 15 May 2025 00:00:00 +0000</pubDate>
+      <guid>liberty-falwell-2025</guid>
+      <category>Employment</category>
+    </item>
+
+    <item>
+      <title>[$9.5M] Stericycle Hazardous Waste Settlement</title>
+      <link>https://www.epa.gov/newsreleases/doj-and-epa-announce-95m-settlement-stericycle-inc-violations-hazardous-waste</link>
+      <description>DOJ and EPA settle with Stericycle over hazardous waste violations.</description>
+      <pubDate>Wed, 22 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>stericycle-epa-2025</guid>
+      <category>Environmental</category>
+    </item>
+
+    <item>
+      <title>[$4.6M] Target Automatic Payment Settlement</title>
+      <link>https://economictimes.indiatimes.com/news/international/us/target-ordered-to-send-out-checks-automatically-in-4-6-million-settlement-who-qualifies/articleshow/126287684.cms</link>
+      <description>Target ordered to send automatic checks to qualifying customers.</description>
+      <pubDate>Mon, 10 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>target-2026</guid>
+      <category>Consumer</category>
+    </item>
+
+    <item>
+      <title>[$1.83M] Golden Corral Data Breach Settlement</title>
+      <link>https://www.claimdepot.com/settlements/gc-data-settlement</link>
+      <description>Golden Corral restaurant data breach settlement. Claims open.</description>
+      <pubDate>Sat, 08 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>goldencorral-2026</guid>
+      <category>Data Breach</category>
+    </item>
+
+    <item>
+      <title>[$1.6M] Cummins Inc. Securities Settlement</title>
+      <link>https://www.claimdepot.com/settlements/case-cummins</link>
+      <description>Cummins Inc. securities class action settlement.</description>
+      <pubDate>Fri, 31 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>cummins-2025</guid>
+      <category>Securities</category>
+    </item>
+
+    <item>
+      <title>[$1.2M] GameSpot Privacy Class Action</title>
+      <link>https://topclassactions.com/lawsuit-settlements/open-lawsuit-settlements/1-2m-gamespot-privacy-class-action-settlement/</link>
+      <description>GameSpot privacy settlement. Claims currently open.</description>
+      <pubDate>Thu, 06 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>gamespot-2026</guid>
+      <category>Privacy</category>
     </item>
 
   </channel>
