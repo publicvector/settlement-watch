@@ -38,13 +38,7 @@ jobs:
       - name: Import existing feed data
         run: |
           echo "=== Importing Existing Feed Data ==="
-          python -c "
-from db.importers import SettlementImporter
-from db.database import get_db
-importer = SettlementImporter(get_db())
-count = importer.import_from_feed_xml('docs/feed.xml')
-print('Imported', count, 'existing settlements')
-"
+          python scripts/import_existing_feed.py
 
       - name: Run settlement dorker
         run: |
