@@ -64,6 +64,18 @@ jobs:
           python scripts/import_state_cases.py 2>&1 || true
         continue-on-error: true
 
+      - name: Run DocumentCloud scraper
+        run: |
+          echo "=== Running DocumentCloud Scraper ==="
+          python scripts/scraper_documentcloud.py --days 7 --limit 100 2>&1 | head -50
+        continue-on-error: true
+
+      - name: Import DocumentCloud data
+        run: |
+          echo "=== Importing DocumentCloud Data ==="
+          python scripts/import_documentcloud.py 2>&1 || true
+        continue-on-error: true
+
       - name: Generate RSS feeds
         run: |
           echo "=== Generating RSS Feeds ==="
@@ -84,6 +96,6 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add docs/feeds/ docs/feeds/types/ docs/feeds/docket/ docs/feed.xml db/settlement_watch.db || true
+          git add docs/feeds/ docs/feeds/types/ docs/feeds/docket/ docs/feeds/documentcloud/ docs/feed.xml db/settlement_watch.db || true
           git diff --staged --quiet || git commit -m "Auto-update feeds $(date -u +%Y-%m-%d)"
           git push

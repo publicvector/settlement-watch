@@ -76,6 +76,25 @@ CREATE TABLE IF NOT EXISTS docket_entries (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- DocumentCloud documents
+CREATE TABLE IF NOT EXISTS documentcloud (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    doc_id TEXT UNIQUE NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    source TEXT,
+    organization TEXT,
+    created_at TEXT,
+    page_count INTEGER,
+    document_url TEXT,
+    pdf_url TEXT,
+    category TEXT,
+    is_court_doc INTEGER DEFAULT 0,
+    is_settlement INTEGER DEFAULT 0,
+    is_order INTEGER DEFAULT 0,
+    imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Feed metadata
 CREATE TABLE IF NOT EXISTS feeds (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

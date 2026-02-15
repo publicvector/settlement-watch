@@ -447,6 +447,89 @@ class RSSGenerator:
             except Exception as e:
                 pass
 
+    # === DocumentCloud Feeds ===
+
+    def generate_documentcloud_feed(self, category: str = None, limit: int = 50) -> str:
+        """Generate RSS feed for DocumentCloud documents."""
+        if category == 'settlement':
+            docs = self.db.get_documentcloud_settlements(limit=limit)
+        elif category == 'court':
+            docs = self.db.get_documentcloud_court_docs(limit=limit)
+        else:
+            docs = self.db.get_documentcloud_docs(category=category, limit=limit)
+
+        items = []
+        for d in docs:
+            title = d.get('title', 'Untitled')
+            if d.get('organization'):
+                title = f"[{d['organization']}] {title}"
+
+            description_parts = []
+            if d.get('description'):
+                description_parts.append(d['description'])
+            if d.get('page_count'):
+                description_parts.append(f"{d['page_count']} pages")
+            if d.get('source'):
+                description_parts.append(f"Source: {d['source']}")
+
+            items.append({
+                'title': title,
+                'url': d.get('document_url', ''),
+                'description': ' | '.join(description_parts) if description_parts else '',
+                'pub_date': d.get('created_at', ''),
+                'guid': f"documentcloud-{d.get('doc_id', '')}",
+                'category': d.get('category', 'document')
+            })
+
+        cat_suffix = f" - {category}" if category else ""
+        return self.generate_rss(
+            title=f"DocumentCloud Legal Documents{cat_suffix}",
+            link="https://www.documentcloud.org/",
+            description=f"Legal documents from DocumentCloud{cat_suffix}",
+            items=items,
+            feed_url=f"https://publicvector.github.io/settlement-watch/feeds/documentcloud{'-' + category if category else ''}.xml"
+        )
+
+    def save_documentcloud_feeds(self):
+        """Generate and save DocumentCloud feeds."""
+        # Create documentcloud subdirectory
+        dc_dir = self.output_dir / "documentcloud"
+        dc_dir.mkdir(exist_ok=True)
+
+        # All documents
+        try:
+            xml = self.generate_documentcloud_feed()
+            (dc_dir / "all.xml").write_text(xml)
+            print("Generated: feeds/documentcloud/all.xml")
+        except Exception as e:
+            print(f"  Error generating DocumentCloud all feed: {e}")
+
+        # Settlements
+        try:
+            xml = self.generate_documentcloud_feed(category='settlement')
+            (dc_dir / "settlements.xml").write_text(xml)
+            print("Generated: feeds/documentcloud/settlements.xml")
+        except Exception as e:
+            print(f"  Error generating DocumentCloud settlements feed: {e}")
+
+        # Court filings
+        try:
+            xml = self.generate_documentcloud_feed(category='court')
+            (dc_dir / "court-filings.xml").write_text(xml)
+            print("Generated: feeds/documentcloud/court-filings.xml")
+        except Exception as e:
+            print(f"  Error generating DocumentCloud court filings feed: {e}")
+
+        # Orders
+        try:
+            docs = self.db.get_documentcloud_docs(category='order', limit=50)
+            if docs:
+                xml = self.generate_documentcloud_feed(category='order')
+                (dc_dir / "orders.xml").write_text(xml)
+                print("Generated: feeds/documentcloud/orders.xml")
+        except Exception as e:
+            print(f"  Error generating DocumentCloud orders feed: {e}")
+
     # === Master Index ===
 
     def generate_feed_index(self) -> str:
@@ -506,6 +589,25 @@ class RSSGenerator:
                    type='rss',
                    xmlUrl='https://publicvector.github.io/settlement-watch/feeds/federal.xml')
 
+        # DocumentCloud
+        dc_outline = SubElement(body, 'outline', text='DocumentCloud', title='DocumentCloud')
+        SubElement(dc_outline, 'outline',
+                   text='All Documents',
+                   type='rss',
+                   xmlUrl='https://publicvector.github.io/settlement-watch/feeds/documentcloud/all.xml')
+        SubElement(dc_outline, 'outline',
+                   text='Settlements',
+                   type='rss',
+                   xmlUrl='https://publicvector.github.io/settlement-watch/feeds/documentcloud/settlements.xml')
+        SubElement(dc_outline, 'outline',
+                   text='Court Filings',
+                   type='rss',
+                   xmlUrl='https://publicvector.github.io/settlement-watch/feeds/documentcloud/court-filings.xml')
+        SubElement(dc_outline, 'outline',
+                   text='Orders',
+                   type='rss',
+                   xmlUrl='https://publicvector.github.io/settlement-watch/feeds/documentcloud/orders.xml')
+
         return '<?xml version="1.0" encoding="UTF-8"?>\n' + tostring(opml, encoding='unicode')
 
     def save_all_feeds(self):
@@ -518,6 +620,7 @@ class RSSGenerator:
         self.save_case_type_feeds()
         self.save_docket_feeds()
         self.save_federal_feeds()
+        self.save_documentcloud_feeds()
 
         # OPML index
         opml = self.generate_feed_index()
@@ -528,6 +631,7 @@ class RSSGenerator:
         stats = self.db.get_stats()
         print(f"Database: {stats['settlements']} settlements, {stats['state_cases']} state cases, {stats['federal_cases']} federal cases")
         print(f"Docket: {stats.get('docket_entries', 0)} entries, {stats.get('opinions', 0)} opinions, {stats.get('orders', 0)} orders")
+        print(f"DocumentCloud: {stats.get('documentcloud', 0)} docs, {stats.get('documentcloud_settlements', 0)} settlements")
 
 
 # State name mapping

@@ -494,6 +494,107 @@ class Database:
         conn.close()
         return [dict(row) for row in rows]
 
+    # === DocumentCloud ===
+
+    def add_documentcloud(self, doc: Dict) -> int:
+        """Add a DocumentCloud document."""
+        conn = self._get_conn()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("""
+                INSERT OR REPLACE INTO documentcloud
+                (doc_id, title, description, source, organization, created_at,
+                 page_count, document_url, pdf_url, category, is_court_doc,
+                 is_settlement, is_order, imported_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                doc.get('id'),
+                doc.get('title', 'Untitled'),
+                doc.get('description', ''),
+                doc.get('source', ''),
+                doc.get('organization', ''),
+                doc.get('created_at', ''),
+                doc.get('page_count', 0),
+                doc.get('document_url', ''),
+                doc.get('pdf_url', ''),
+                doc.get('category', 'document'),
+                1 if doc.get('is_court_doc') else 0,
+                1 if doc.get('is_settlement') else 0,
+                1 if doc.get('is_order') else 0,
+                datetime.now().isoformat()
+            ))
+            conn.commit()
+            return cursor.lastrowid
+        finally:
+            conn.close()
+
+    def add_documentcloud_docs(self, docs: List[Dict]) -> int:
+        """Bulk add DocumentCloud documents."""
+        count = 0
+        for doc in docs:
+            try:
+                self.add_documentcloud(doc)
+                count += 1
+            except Exception as e:
+                print(f"Error adding DocumentCloud doc: {e}")
+        return count
+
+    def get_documentcloud_docs(self, category: str = None, limit: int = 50) -> List[Dict]:
+        """Get DocumentCloud documents, optionally filtered by category."""
+        conn = self._get_conn()
+        cursor = conn.cursor()
+
+        if category:
+            cursor.execute("""
+                SELECT * FROM documentcloud
+                WHERE category = ?
+                ORDER BY created_at DESC
+                LIMIT ?
+            """, (category, limit))
+        else:
+            cursor.execute("""
+                SELECT * FROM documentcloud
+                ORDER BY created_at DESC
+                LIMIT ?
+            """, (limit,))
+
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+
+    def get_documentcloud_settlements(self, limit: int = 50) -> List[Dict]:
+        """Get DocumentCloud documents tagged as settlements."""
+        conn = self._get_conn()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT * FROM documentcloud
+            WHERE is_settlement = 1
+            ORDER BY created_at DESC
+            LIMIT ?
+        """, (limit,))
+
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+
+    def get_documentcloud_court_docs(self, limit: int = 50) -> List[Dict]:
+        """Get DocumentCloud court documents."""
+        conn = self._get_conn()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT * FROM documentcloud
+            WHERE is_court_doc = 1
+            ORDER BY created_at DESC
+            LIMIT ?
+        """, (limit,))
+
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+
     # === Stats ===
 
     def get_stats(self) -> Dict:
@@ -514,6 +615,21 @@ class Database:
 
         cursor.execute("SELECT COUNT(*) as count FROM federal_cases")
         stats['federal_cases'] = cursor.fetchone()['count']
+
+        # DocumentCloud stats
+        try:
+            cursor.execute("SELECT COUNT(*) as count FROM documentcloud")
+            stats['documentcloud'] = cursor.fetchone()['count']
+
+            cursor.execute("SELECT COUNT(*) as count FROM documentcloud WHERE is_settlement = 1")
+            stats['documentcloud_settlements'] = cursor.fetchone()['count']
+
+            cursor.execute("SELECT COUNT(*) as count FROM documentcloud WHERE is_court_doc = 1")
+            stats['documentcloud_court_docs'] = cursor.fetchone()['count']
+        except:
+            stats['documentcloud'] = 0
+            stats['documentcloud_settlements'] = 0
+            stats['documentcloud_court_docs'] = 0
 
         # Docket entry stats
         try:
