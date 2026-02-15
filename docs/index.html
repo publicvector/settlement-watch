@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settlement Watch - Legal Settlement RSS Feed</title>
+    <link rel="alternate" type="application/rss+xml" title="Settlement Watch RSS" href="feed.xml">
+    <link rel="alternate" type="application/atom+xml" title="Settlement Watch Atom" href="feed.atom">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle { color: #888; margin-bottom: 2rem; font-size: 1.1rem; }
+        .feeds {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .feed-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .feed-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,212,255,0.2);
+        }
+        .feed-card h3 { color: #00d4ff; margin-bottom: 0.5rem; }
+        .feed-card p { color: #aaa; font-size: 0.9rem; margin-bottom: 1rem; }
+        .feed-card a {
+            display: inline-block;
+            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        .feed-card a:hover { opacity: 0.9; }
+        .stats {
+            display: flex;
+            gap: 2rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        .stat { text-align: center; }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+        .stat-label { color: #888; font-size: 0.9rem; }
+        .settlements { margin-top: 2rem; }
+        .settlements h2 { margin-bottom: 1rem; color: #00d4ff; }
+        .settlement {
+            background: rgba(255,255,255,0.03);
+            border-left: 3px solid #7b2ff7;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0 8px 8px 0;
+        }
+        .settlement-title { font-weight: 600; margin-bottom: 0.3rem; }
+        .settlement-amount {
+            color: #00d4ff;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .settlement-meta { color: #666; font-size: 0.85rem; margin-top: 0.5rem; }
+        .settlement a { color: #7b2ff7; }
+        .copy-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+        .copy-btn:hover { background: rgba(255,255,255,0.2); }
+        .url-box {
+            background: rgba(0,0,0,0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: #666;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Settlement Watch</h1>
+        <p class="subtitle">Aggregated legal settlement discoveries from federal courts, state courts, and regulatory filings</p>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">50+</div>
+                <div class="stat-label">Settlements Tracked</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">15</div>
+                <div class="stat-label">State Courts</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">94</div>
+                <div class="stat-label">Federal Districts</div>
+            </div>
+        </div>
+
+        <div class="feeds">
+            <div class="feed-card">
+                <h3>RSS Feed</h3>
+                <p>Subscribe in any RSS reader (Feedly, Inoreader, NetNewsWire)</p>
+                <a href="feed.xml">Get RSS Feed</a>
+                <div class="url-box">
+                    <span id="rss-url">feed.xml</span>
+                    <button class="copy-btn" onclick="copyUrl('rss-url')">Copy</button>
+                </div>
+            </div>
+            <div class="feed-card">
+                <h3>Atom Feed</h3>
+                <p>Alternative feed format for maximum compatibility</p>
+                <a href="feed.atom">Get Atom Feed</a>
+                <div class="url-box">
+                    <span id="atom-url">feed.atom</span>
+                    <button class="copy-btn" onclick="copyUrl('atom-url')">Copy</button>
+                </div>
+            </div>
+            <div class="feed-card">
+                <h3>JSON Data</h3>
+                <p>Raw settlement data for developers</p>
+                <a href="settlements.json">View JSON</a>
+                <div class="url-box">
+                    <span id="json-url">settlements.json</span>
+                    <button class="copy-btn" onclick="copyUrl('json-url')">Copy</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="settlements">
+            <h2>Recent High-Value Settlements</h2>
+
+            <div class="settlement">
+                <div class="settlement-amount">$8.9 Billion</div>
+                <div class="settlement-title">Johnson & Johnson Talc Settlement</div>
+                <p>Settlement for talc-related cancer claims in mass tort litigation</p>
+                <div class="settlement-meta">Source: Class Action MDL | <a href="https://www.reuters.com/legal/litigation/johnson-johnson-proposes-89-billion-settlement-talc-claims-2024-05-01/" target="_blank">Details</a></div>
+            </div>
+
+            <div class="settlement">
+                <div class="settlement-amount">$6 Billion</div>
+                <div class="settlement-title">3M Military Earplug Settlement</div>
+                <p>Settlement for defective combat earplugs affecting military personnel</p>
+                <div class="settlement-meta">Source: MDL 2885 | <a href="https://www.3mearplugsettlement.com/" target="_blank">Details</a></div>
+            </div>
+
+            <div class="settlement">
+                <div class="settlement-amount">$3.7 Billion</div>
+                <div class="settlement-title">Wells Fargo Fake Accounts</div>
+                <p>CFPB settlement for unauthorized account openings scandal</p>
+                <div class="settlement-meta">Source: CFPB | <a href="https://www.consumerfinance.gov/enforcement/actions/wells-fargo-2022/" target="_blank">Details</a></div>
+            </div>
+
+            <div class="settlement">
+                <div class="settlement-amount">$725 Million</div>
+                <div class="settlement-title">Facebook Privacy (Cambridge Analytica)</div>
+                <p>Class action settlement over unauthorized data sharing</p>
+                <div class="settlement-meta">Source: Class Action | <a href="https://www.facebookuserprivacysettlement.com/" target="_blank">Details</a></div>
+            </div>
+
+            <div class="settlement">
+                <div class="settlement-amount">$425 Million</div>
+                <div class="settlement-title">Equifax Data Breach</div>
+                <p>FTC settlement for 2017 breach affecting 147 million people</p>
+                <div class="settlement-meta">Source: FTC | <a href="https://www.equifaxbreachsettlement.com/" target="_blank">Details</a></div>
+            </div>
+
+            <div class="settlement">
+                <div class="settlement-amount">$392 Million</div>
+                <div class="settlement-title">Google Location Tracking</div>
+                <p>Settlement with 40 state attorneys general over location tracking</p>
+                <div class="settlement-meta">Source: State AG Coalition | <a href="https://www.googlelocationhistorysettlement.com/" target="_blank">Details</a></div>
+            </div>
+
+            <div class="settlement">
+                <div class="settlement-amount">$350 Million</div>
+                <div class="settlement-title">T-Mobile Data Breach</div>
+                <p>Class action for 2021 breach affecting 76 million customers</p>
+                <div class="settlement-meta">Source: Class Action | <a href="https://www.t-mobilesettlement.com/" target="_blank">Details</a></div>
+            </div>
+
+            <div class="settlement">
+                <div class="settlement-amount">$1.2 Billion</div>
+                <div class="settlement-title">Juul E-Cigarette Marketing</div>
+                <p>Settlement with states over youth marketing practices</p>
+                <div class="settlement-meta">Source: State AG | <a href="https://www.juulsettlement.com/" target="_blank">Details</a></div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Settlement Watch aggregates publicly available settlement information from federal courts (PACER/RECAP),
+            state courts (15 states), regulatory filings, and class action databases.</p>
+            <p style="margin-top: 0.5rem;">Data sources: PACER, CourtListener RECAP, State Court APIs, FTC, CFPB, SEC, State AGs</p>
+            <p style="margin-top: 0.5rem;">Built with Python court scrapers covering Alaska, Arkansas, Colorado, Connecticut, Delaware, Indiana, Louisiana, Montana, Nevada, North Dakota, Ohio, Oklahoma, Pennsylvania, Vermont, and Wisconsin.</p>
+        </footer>
+    </div>
+
+    <script>
+        function copyUrl(elementId) {
+            const url = window.location.href.replace(/[^/]*$/, '') + document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('URL copied: ' + url);
+            });
+        }
+
+        // Update URLs with full path on load
+        window.onload = function() {
+            const base = window.location.href.replace(/[^/]*$/, '');
+            document.getElementById('rss-url').textContent = base + 'feed.xml';
+            document.getElementById('atom-url').textContent = base + 'feed.atom';
+            document.getElementById('json-url').textContent = base + 'settlements.json';
+        };
+    </script>
+</body>
+</html>

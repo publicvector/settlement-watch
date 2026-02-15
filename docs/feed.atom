@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Settlement Watch - Legal Settlement Feed</title>
+  <link href="https://yourusername.github.io/pacer_api_rss_demo/"/>
+  <link href="https://yourusername.github.io/pacer_api_rss_demo/feed.atom" rel="self"/>
+  <updated>2026-02-15T12:00:00Z</updated>
+  <id>https://yourusername.github.io/pacer_api_rss_demo/</id>
+  <subtitle>Legal settlement discoveries from federal and state courts</subtitle>
+
+  <entry>
+    <title>[$8.9 Billion] Johnson &amp; Johnson Talc Settlement</title>
+    <link href="https://www.reuters.com/legal/litigation/johnson-johnson-proposes-89-billion-settlement-talc-claims-2024-05-01/"/>
+    <id>jnj-talc-2024</id>
+    <updated>2024-05-01T00:00:00Z</updated>
+    <summary>Settlement for talc-related cancer claims. Amount: $8.9 Billion. Source: Class Action MDL</summary>
+    <category term="Mass Tort"/>
+  </entry>
+
+  <entry>
+    <title>[$6 Billion] 3M Military Earplug Settlement</title>
+    <link href="https://www.3mearplugsettlement.com/"/>
+    <id>3m-earplug-2023</id>
+    <updated>2023-08-29T00:00:00Z</updated>
+    <summary>Settlement for defective combat earplugs. Amount: $6 Billion. Source: MDL 2885</summary>
+    <category term="Product Liability"/>
+  </entry>
+
+  <entry>
+    <title>[$3.7 Billion] Wells Fargo Fake Accounts Settlement</title>
+    <link href="https://www.consumerfinance.gov/enforcement/actions/wells-fargo-2022/"/>
+    <id>wells-fargo-cfpb-2022</id>
+    <updated>2022-12-20T00:00:00Z</updated>
+    <summary>CFPB settlement for unauthorized account openings. Amount: $3.7 Billion. Source: CFPB</summary>
+    <category term="Banking"/>
+  </entry>
+
+  <entry>
+    <title>[$1.2 Billion] Juul E-Cigarette Marketing Settlement</title>
+    <link href="https://www.juulsettlement.com/"/>
+    <id>juul-states-2023</id>
+    <updated>2023-04-12T00:00:00Z</updated>
+    <summary>Settlement with states over youth marketing. Amount: $1.2 Billion. Source: State AGs</summary>
+    <category term="Consumer Protection"/>
+  </entry>
+
+  <entry>
+    <title>[$725 Million] Facebook Privacy Settlement</title>
+    <link href="https://www.facebookuserprivacysettlement.com/"/>
+    <id>facebook-privacy-2023</id>
+    <updated>2023-09-22T00:00:00Z</updated>
+    <summary>Cambridge Analytica data sharing settlement. Amount: $725 Million. Source: Class Action</summary>
+    <category term="Privacy"/>
+  </entry>
+
+  <entry>
+    <title>[$425 Million] Equifax Data Breach Settlement</title>
+    <link href="https://www.equifaxbreachsettlement.com/"/>
+    <id>equifax-ftc-2023</id>
+    <updated>2023-12-01T00:00:00Z</updated>
+    <summary>FTC settlement for 2017 breach. Amount: $425 Million. Source: FTC</summary>
+    <category term="Data Breach"/>
+  </entry>
+
+  <entry>
+    <title>[$392 Million] Google Location Tracking Settlement</title>
+    <link href="https://www.googlelocationhistorysettlement.com/"/>
+    <id>google-location-2023</id>
+    <updated>2023-11-14T00:00:00Z</updated>
+    <summary>Settlement with 40 states over location tracking. Amount: $392 Million. Source: State AGs</summary>
+    <category term="Privacy"/>
+  </entry>
+
+  <entry>
+    <title>[$350 Million] T-Mobile Data Breach Settlement</title>
+    <link href="https://www.t-mobilesettlement.com/"/>
+    <id>tmobile-breach-2024</id>
+    <updated>2024-01-15T00:00:00Z</updated>
+    <summary>2021 data breach settlement. Amount: $350 Million. Source: Class Action</summary>
+    <category term="Data Breach"/>
+  </entry>
+
+</feed>

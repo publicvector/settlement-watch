@@ -1,0 +1,117 @@
+{
+  "title": "Settlement Watch",
+  "description": "Legal settlement discoveries from federal and state courts",
+  "updated": "2026-02-15T12:00:00Z",
+  "sources": {
+    "federal_courts": 94,
+    "state_courts": 15,
+    "regulatory": ["FTC", "CFPB", "SEC", "State AGs"]
+  },
+  "settlements": [
+    {
+      "title": "Johnson & Johnson Talc Settlement",
+      "amount": 8900000000,
+      "amount_formatted": "$8.9 Billion",
+      "url": "https://www.reuters.com/legal/litigation/johnson-johnson-proposes-89-billion-settlement-talc-claims-2024-05-01/",
+      "description": "Settlement for talc-related cancer claims in mass tort litigation",
+      "source": "Class Action MDL",
+      "category": "Mass Tort",
+      "date": "2024-05-01"
+    },
+    {
+      "title": "3M Military Earplug Settlement",
+      "amount": 6000000000,
+      "amount_formatted": "$6 Billion",
+      "url": "https://www.3mearplugsettlement.com/",
+      "description": "Settlement for defective combat earplugs affecting military personnel",
+      "source": "MDL 2885",
+      "category": "Product Liability",
+      "date": "2023-08-29"
+    },
+    {
+      "title": "Wells Fargo Fake Accounts Settlement",
+      "amount": 3700000000,
+      "amount_formatted": "$3.7 Billion",
+      "url": "https://www.consumerfinance.gov/enforcement/actions/wells-fargo-2022/",
+      "description": "CFPB settlement for unauthorized account openings scandal",
+      "source": "CFPB",
+      "category": "Banking",
+      "date": "2022-12-20"
+    },
+    {
+      "title": "Juul E-Cigarette Marketing Settlement",
+      "amount": 1200000000,
+      "amount_formatted": "$1.2 Billion",
+      "url": "https://www.juulsettlement.com/",
+      "description": "Settlement with states over youth marketing practices",
+      "source": "State Attorneys General",
+      "category": "Consumer Protection",
+      "date": "2023-04-12"
+    },
+    {
+      "title": "Facebook Privacy Settlement",
+      "amount": 725000000,
+      "amount_formatted": "$725 Million",
+      "url": "https://www.facebookuserprivacysettlement.com/",
+      "description": "Cambridge Analytica data sharing settlement",
+      "source": "Class Action",
+      "category": "Privacy",
+      "date": "2023-09-22"
+    },
+    {
+      "title": "Equifax Data Breach Settlement",
+      "amount": 425000000,
+      "amount_formatted": "$425 Million",
+      "url": "https://www.equifaxbreachsettlement.com/",
+      "description": "FTC settlement for 2017 breach affecting 147 million people",
+      "source": "FTC",
+      "category": "Data Breach",
+      "date": "2023-12-01"
+    },
+    {
+      "title": "Google Location Tracking Settlement",
+      "amount": 392000000,
+      "amount_formatted": "$392 Million",
+      "url": "https://www.googlelocationhistorysettlement.com/",
+      "description": "Settlement with 40 states over location tracking practices",
+      "source": "State AG Coalition",
+      "category": "Privacy",
+      "date": "2023-11-14"
+    },
+    {
+      "title": "T-Mobile Data Breach Settlement",
+      "amount": 350000000,
+      "amount_formatted": "$350 Million",
+      "url": "https://www.t-mobilesettlement.com/",
+      "description": "Class action for 2021 breach affecting 76 million customers",
+      "source": "Class Action",
+      "category": "Data Breach",
+      "date": "2024-01-15"
+    },
+    {
+      "title": "Syngenta GMO Corn Settlement",
+      "amount": 300000000,
+      "amount_formatted": "$300 Million",
+      "url": "https://www.sloangmocornsettlement.com/",
+      "description": "Settlement for farmers affected by GMO corn contamination",
+      "source": "MDL 2591",
+      "category": "Agriculture",
+      "date": "2023-06-15"
+    },
+    {
+      "title": "McKinsey Opioid Settlement",
+      "amount": 230000000,
+      "amount_formatted": "$230 Million",
+      "url": "https://www.mckinseysettlement.com/",
+      "description": "Settlement with states over consulting work for opioid manufacturers",
+      "source": "State Attorneys General",
+      "category": "Opioid",
+      "date": "2023-05-01"
+    }
+  ],
+  "state_courts_covered": [
+    "Alaska", "Arkansas", "Colorado", "Connecticut", "Delaware",
+    "Indiana", "Louisiana", "Montana", "Nevada", "North Dakota",
+    "Ohio", "Oklahoma", "Pennsylvania", "Vermont", "Wisconsin"
+  ]
+}
