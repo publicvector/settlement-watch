@@ -9,12 +9,102 @@
     <atom:link href="https://publicvector.github.io/settlement-watch/feed.xml" rel="self" type="application/rss+xml"/>
 
     <item>
+      <title>[$2.67B] Blue Cross Blue Shield Antitrust Settlement</title>
+      <link>https://www.consumeraffairs.com/news/267-billion-finally-headed-for-blue-cross-blue-shield-settlement</link>
+      <description>Blue Cross Blue Shield antitrust settlement payments finally being distributed. One of the largest healthcare settlements.</description>
+      <pubDate>Fri, 14 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>bcbs-antitrust-2026</guid>
+      <category>Healthcare</category>
+    </item>
+
+    <item>
+      <title>[$2.5B] FTC vs Amazon Prime Settlement</title>
+      <link>https://www.ftc.gov/news-events/news/press-releases/2025/09/ftc-secures-historic</link>
+      <description>FTC secures historic $2.5 billion settlement against Amazon for Prime subscription practices. Record consumer protection enforcement.</description>
+      <pubDate>Thu, 25 Sep 2025 00:00:00 +0000</pubDate>
+      <guid>ftc-amazon-2025</guid>
+      <category>Consumer Protection</category>
+    </item>
+
+    <item>
+      <title>[$1.5B] Anthropic AI Copyright Settlement</title>
+      <link>https://apnews.com/article/anthropic-copyright-authors-settlement-training-f2942</link>
+      <description>Anthropic agrees to pay authors at least $1.5 billion to settle copyright lawsuit over AI training data.</description>
+      <pubDate>Wed, 12 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>anthropic-copyright-2026</guid>
+      <category>Intellectual Property</category>
+    </item>
+
+    <item>
+      <title>[$1.38B] Texas vs Google Privacy Settlement</title>
+      <link>https://www.newsweek.com/texas-secures-historic-settlement-google-privacy-violations</link>
+      <description>Texas Attorney General secures historic $1.38 billion settlement with Google over privacy violations.</description>
+      <pubDate>Mon, 10 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>texas-google-2026</guid>
+      <category>Privacy</category>
+    </item>
+
+    <item>
+      <title>[$1B] Bard Hernia Mesh MDL Settlement</title>
+      <link>https://allaboutlawyer.com/bard-hernia-mesh-lawsuit-update-2026-1-billion-settlement</link>
+      <description>Bard hernia mesh litigation reaches $1 billion settlement. Mass tort MDL for defective medical devices.</description>
+      <pubDate>Sun, 09 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>bard-mesh-2026</guid>
+      <category>Mass Tort</category>
+    </item>
+
+    <item>
+      <title>[$720M] National Opioid Settlement (Michigan AG)</title>
+      <link>https://www.michigan.gov/ag/news/press-releases/2025/07/10/attorney-general-nessel-opioid</link>
+      <description>Michigan AG Nessel secures $720 million national opioid settlement. Multistate enforcement action.</description>
+      <pubDate>Thu, 10 Jul 2025 00:00:00 +0000</pubDate>
+      <guid>michigan-opioid-2025</guid>
+      <category>Opioid</category>
+    </item>
+
+    <item>
+      <title>[$556M] Kaiser Permanente Medicare Fraud Settlement</title>
+      <link>https://medicalxpress.com/news/2026-01-kaiser-permanente-pay-million-medicare.html</link>
+      <description>Kaiser Permanente pays $556 million in record Medicare Advantage fraud settlement. Largest Medicare Advantage recovery.</description>
+      <pubDate>Wed, 22 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>kaiser-medicare-2026</guid>
+      <category>Healthcare Fraud</category>
+    </item>
+
+    <item>
       <title>[$500M] Harvard-Trump Antisemitism Settlement</title>
       <link>https://apnews.com/article/harvard-trump-agreement-antisemitism</link>
       <description>Harvard nearing federal settlement agreement over antisemitism claims. $500 million payment discussed.</description>
       <pubDate>Sat, 15 Feb 2026 00:00:00 +0000</pubDate>
       <guid>harvard-trump-2026</guid>
       <category>Education</category>
+    </item>
+
+    <item>
+      <title>[$425M] Teva Pharmaceuticals DOJ Settlement</title>
+      <link>https://www.justice.gov/usao-ma/pr/teva-pharmaceuticals-agrees-pay-425-million-resolve</link>
+      <description>Teva Pharmaceuticals agrees to pay $425 million to resolve DOJ investigation. False Claims Act enforcement.</description>
+      <pubDate>Tue, 04 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>teva-doj-2026</guid>
+      <category>Pharma</category>
+    </item>
+
+    <item>
+      <title>[$350M] Walgreens Opioid Settlement</title>
+      <link>https://apnews.com/article/walgreens-settlement-opioid-crisis-lawsuit-daf1cf197d</link>
+      <description>Walgreens agrees to pay up to $350 million in opioid crisis settlement.</description>
+      <pubDate>Sat, 01 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>walgreens-opioid-2026</guid>
+      <category>Opioid</category>
+    </item>
+
+    <item>
+      <title>[$233M] Disney Employee Wage Settlement</title>
+      <link>https://www.yahoo.com/news/articles/disney-233-million-settlement-employees</link>
+      <description>Disney $233 million settlement with employees wins final approval. Wage and labor class action.</description>
+      <pubDate>Fri, 07 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>disney-wage-2026</guid>
+      <category>Employment</category>
     </item>
 
     <item>
@@ -81,12 +171,30 @@
     </item>
 
     <item>
+      <title>[$100M] Vanguard SEC Settlement</title>
+      <link>https://www.sec.gov/newsroom/press-releases/2025-21</link>
+      <description>Vanguard to pay more than $100 million to resolve SEC violations. Securities enforcement action.</description>
+      <pubDate>Thu, 30 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>vanguard-sec-2026</guid>
+      <category>Securities</category>
+    </item>
+
+    <item>
       <title>[$100M] Verizon Administrative Charges Settlement</title>
       <link>https://www.lib-web.org/verizon-class-action-lawsuit-settlement-2026/</link>
       <description>Verizon class action over administrative charges. Check eligibility.</description>
       <pubDate>Wed, 12 Feb 2026 00:00:00 +0000</pubDate>
       <guid>verizon-2026</guid>
       <category>Telecom</category>
+    </item>
+
+    <item>
+      <title>[$80M] Kia Vehicle Theft Settlement</title>
+      <link>https://www.claimdepot.com/settlements/kia-auto</link>
+      <description>Kia $80 million settlement for vehicle theft claims. TikTok challenge-related thefts.</description>
+      <pubDate>Tue, 11 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>kia-theft-2026</guid>
+      <category>Auto</category>
     </item>
 
     <item>
