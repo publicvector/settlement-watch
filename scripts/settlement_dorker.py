@@ -7,7 +7,7 @@ import asyncio
 import re
 import json
 from datetime import datetime
-from ddgs import DDGS
+from duckduckgo_search import DDGS
 from typing import List, Dict, Optional
 from dataclasses import dataclass, asdict
 
