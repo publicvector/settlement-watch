@@ -1280,19 +1280,44 @@ def api_court_benchmarks():
     return get_court_benchmarks()
 
 
-# --- ML-Powered Predictions ---
+# --- ML-Powered Predictions (ONNX for Vercel compatibility) ---
+
+def _get_ml_predictor():
+    """Get the appropriate ML predictor based on available dependencies."""
+    # Try ONNX first (lightweight, works on Vercel)
+    try:
+        from ml.inference.onnx_predictor import ONNXPredictor
+        predictor = ONNXPredictor()
+        if any(predictor.is_available().values()):
+            return predictor, "onnx"
+    except ImportError:
+        pass
+
+    # Fall back to sklearn predictor (full features, local only)
+    try:
+        from ml.inference.predictor import CasePredictor
+        return CasePredictor(), "sklearn"
+    except ImportError:
+        pass
+
+    return None, None
+
 
 @app.get("/v1/ml/status")
 def api_ml_status():
     """Check ML model availability."""
     from ml.config import CURRENT_MODEL_DIR, MODEL_VERSION
-    models = ['dismissal', 'value', 'resolution', 'duration']
+
+    predictor, backend = _get_ml_predictor()
+    if predictor:
+        models = predictor.is_available()
+    else:
+        models = {m: False for m in ['dismissal', 'value', 'resolution', 'duration']}
+
     return {
         "version": MODEL_VERSION,
-        "models": {
-            m: (CURRENT_MODEL_DIR / f"{m}.pkl").exists()
-            for m in models
-        }
+        "backend": backend or "none",
+        "models": models
     }
 
 
@@ -1311,9 +1336,11 @@ def api_ml_predict(
 
     Returns dismissal probability, value estimate, resolution path, and duration.
     """
+    predictor, backend = _get_ml_predictor()
+    if predictor is None:
+        return {"error": "ML models not available"}
+
     try:
-        from ml.inference.predictor import CasePredictor
-        predictor = CasePredictor()
         result = predictor.predict(
             court=court,
             nos=nos,
@@ -1323,7 +1350,9 @@ def api_ml_predict(
             pro_se=pro_se,
             mdl=mdl,
         )
-        return result.to_dict()
+        output = result.to_dict()
+        output["backend"] = backend
+        return output
     except Exception as e:
         return {"error": str(e)}
 
@@ -1337,9 +1366,11 @@ def api_ml_dismissal(
     class_action: bool = False
 ):
     """Predict dismissal probability using ML model."""
+    predictor, _ = _get_ml_predictor()
+    if predictor is None:
+        return {"error": "ML models not available"}
+
     try:
-        from ml.inference.predictor import CasePredictor
-        predictor = CasePredictor()
         return predictor.predict_dismissal(
             court=court,
             nos=nos,
@@ -1359,9 +1390,11 @@ def api_ml_value(
     class_action: bool = False
 ):
     """Predict settlement value range using ML model."""
+    predictor, _ = _get_ml_predictor()
+    if predictor is None:
+        return {"error": "ML models not available"}
+
     try:
-        from ml.inference.predictor import CasePredictor
-        predictor = CasePredictor()
         return predictor.predict_value(
             court=court,
             nos=nos,
@@ -1380,9 +1413,11 @@ def api_ml_resolution(
     class_action: bool = False
 ):
     """Predict resolution path using ML model."""
+    predictor, _ = _get_ml_predictor()
+    if predictor is None:
+        return {"error": "ML models not available"}
+
     try:
-        from ml.inference.predictor import CasePredictor
-        predictor = CasePredictor()
         return predictor.predict_resolution(
             court=court,
             nos=nos,
@@ -1400,9 +1435,11 @@ def api_ml_duration(
     defendant: str = None
 ):
     """Predict case duration using ML model."""
+    predictor, _ = _get_ml_predictor()
+    if predictor is None:
+        return {"error": "ML models not available"}
+
     try:
-        from ml.inference.predictor import CasePredictor
-        predictor = CasePredictor()
         return predictor.predict_duration(
             court=court,
             nos=nos,

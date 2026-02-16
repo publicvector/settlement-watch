@@ -14,5 +14,6 @@ duckduckgo-search>=4.0.0
 aiohttp>=3.9.0
 python-dateutil>=2.8.0
 
-# Note: ML dependencies (scikit-learn, pandas, numpy) excluded for Vercel
-# due to serverless size limits. ML endpoints will return "not available".
+# ML inference (lightweight ONNX runtime)
+onnxruntime>=1.16.0
+numpy>=1.24.0

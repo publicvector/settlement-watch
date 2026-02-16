@@ -1,0 +1,51 @@
+# Database files (use Turso cloud database instead)
+*.db
+*.sqlite
+*.sqlite3
+app/demo.db
+data/*.db
+
+# Large data files (exclude pkl but keep onnx)
+turso_dump.sql
+*.sql
+*.csv
+*.csv.bz2
+*.pkl
+/data/*.db
+/data/models/*/*.pkl
+# Keep ONNX models: /data/models/*/onnx/*.onnx
+
+# Development files
+.env
+.env.local
+.claude/
+__pycache__/
+*.pyc
+.pytest_cache/
+venv/
+.venv/
+
+# Logs and temp files
+*.log
+server.log
+logs/
+reports/
+
+# PACER credentials and cookies
+.pacer_cookies.json
+pacer_*.html
+direct_login_response.html
+headers_login_response.html
+
+# Docs and fixtures (not needed for deployment)
+docs/
+fixtures/
+*.md
+!README.md
+
+# Scripts (not needed at runtime)
+scripts/
+*.sh
+
+# Downloaded documents
+docs_cache/
