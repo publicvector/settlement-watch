@@ -88,6 +88,12 @@ jobs:
           python scripts/recap_client.py --enrich --update 2>&1 | head -40
         continue-on-error: true
 
+      - name: Run SEC EDGAR scraper
+        run: |
+          echo "=== Running SEC EDGAR Scraper ==="
+          python scripts/scraper_sec_edgar.py --days 30 --limit 25 --import-db 2>&1 | head -50
+        continue-on-error: true
+
       - name: Generate RSS feeds
         run: |
           echo "=== Generating RSS Feeds ==="
