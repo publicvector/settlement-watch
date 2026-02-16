@@ -10,21 +10,9 @@ anthropic>=0.40.0
 # Settlement dorker
 duckduckgo-search>=4.0.0
 
-# State court scraping dependencies
-playwright>=1.40.0
-playwright-stealth>=1.0.0
+# Async HTTP
 aiohttp>=3.9.0
 python-dateutil>=2.8.0
 
-# OCR dependencies for scanned PDFs
-# System requirements: brew install tesseract poppler
-pytesseract>=0.3.10
-pdf2image>=1.16.0
-Pillow>=10.0.0
-
-# ML dependencies for predictive analytics
-scikit-learn>=1.3.0
-pandas>=2.0.0
-numpy>=1.24.0
-scipy>=1.11.0
-joblib>=1.3.0
+# Note: ML dependencies (scikit-learn, pandas, numpy) excluded for Vercel
+# due to serverless size limits. ML endpoints will return "not available".
