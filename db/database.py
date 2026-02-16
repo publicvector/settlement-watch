@@ -595,6 +595,190 @@ class Database:
         conn.close()
         return [dict(row) for row in rows]
 
+    # === Case Outcomes (Complaint → Settlement Tracking) ===
+
+    def add_case_outcome(self, outcome: Dict) -> int:
+        """Add a case outcome linking complaint to settlement."""
+        conn = self._get_conn()
+        cursor = conn.cursor()
+
+        # Calculate days to resolution if both dates present
+        days_to_resolution = None
+        if outcome.get('complaint_date') and outcome.get('settlement_date'):
+            try:
+                comp_date = datetime.fromisoformat(outcome['complaint_date'][:10])
+                sett_date = datetime.fromisoformat(outcome['settlement_date'][:10])
+                days_to_resolution = (sett_date - comp_date).days
+            except:
+                pass
+
+        # Calculate outcome ratio if both amounts present
+        outcome_ratio = None
+        if outcome.get('initial_demand') and outcome.get('settlement_amount'):
+            try:
+                outcome_ratio = outcome['settlement_amount'] / outcome['initial_demand']
+            except:
+                pass
+
+        raw_data_json = json.dumps(outcome.get('raw_data')) if outcome.get('raw_data') else None
+
+        try:
+            cursor.execute("""
+                INSERT OR REPLACE INTO case_outcomes
+                (case_number, case_title, court, jurisdiction, state, nature_of_suit, case_type,
+                 complaint_date, complaint_url, complaint_pdf_url, initial_demand, initial_demand_formatted,
+                 plaintiff, defendant, class_definition, estimated_class_size,
+                 settlement_date, settlement_amount, settlement_amount_formatted, settlement_url, settlement_pdf_url,
+                 attorney_fees, attorney_fees_formatted, actual_class_size, per_claimant_amount, claims_deadline,
+                 days_to_resolution, outcome_ratio,
+                 settlement_id, federal_case_id, state_case_id,
+                 source, raw_data, guid, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                outcome.get('case_number'),
+                outcome.get('case_title'),
+                outcome.get('court'),
+                outcome.get('jurisdiction'),
+                outcome.get('state'),
+                outcome.get('nature_of_suit'),
+                outcome.get('case_type'),
+                outcome.get('complaint_date'),
+                outcome.get('complaint_url'),
+                outcome.get('complaint_pdf_url'),
+                outcome.get('initial_demand'),
+                outcome.get('initial_demand_formatted'),
+                outcome.get('plaintiff'),
+                outcome.get('defendant'),
+                outcome.get('class_definition'),
+                outcome.get('estimated_class_size'),
+                outcome.get('settlement_date'),
+                outcome.get('settlement_amount'),
+                outcome.get('settlement_amount_formatted'),
+                outcome.get('settlement_url'),
+                outcome.get('settlement_pdf_url'),
+                outcome.get('attorney_fees'),
+                outcome.get('attorney_fees_formatted'),
+                outcome.get('actual_class_size'),
+                outcome.get('per_claimant_amount'),
+                outcome.get('claims_deadline'),
+                days_to_resolution,
+                outcome_ratio,
+                outcome.get('settlement_id'),
+                outcome.get('federal_case_id'),
+                outcome.get('state_case_id'),
+                outcome.get('source'),
+                raw_data_json,
+                outcome.get('guid') or f"{outcome.get('case_number', 'unknown')}-{outcome.get('settlement_amount', '')}",
+                datetime.now().isoformat()
+            ))
+            conn.commit()
+            return cursor.lastrowid
+        finally:
+            conn.close()
+
+    def add_case_outcomes(self, outcomes: List[Dict]) -> int:
+        """Bulk add case outcomes."""
+        count = 0
+        for o in outcomes:
+            try:
+                self.add_case_outcome(o)
+                count += 1
+            except Exception as e:
+                print(f"Error adding case outcome: {e}")
+        return count
+
+    def get_case_outcomes(self, limit: int = 100, min_amount: float = None) -> List[Dict]:
+        """Get case outcomes, optionally filtered by minimum settlement amount."""
+        conn = self._get_conn()
+        cursor = conn.cursor()
+
+        if min_amount:
+            cursor.execute("""
+                SELECT * FROM case_outcomes
+                WHERE settlement_amount >= ?
+                ORDER BY settlement_amount DESC
+                LIMIT ?
+            """, (min_amount, limit))
+        else:
+            cursor.execute("""
+                SELECT * FROM case_outcomes
+                ORDER BY settlement_date DESC
+                LIMIT ?
+            """, (limit,))
+
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+
+    def get_case_outcomes_by_type(self, nature_of_suit: str = None, case_type: str = None, limit: int = 100) -> List[Dict]:
+        """Get case outcomes filtered by case type or nature of suit."""
+        conn = self._get_conn()
+        cursor = conn.cursor()
+
+        if nature_of_suit:
+            cursor.execute("""
+                SELECT * FROM case_outcomes
+                WHERE nature_of_suit LIKE ?
+                ORDER BY settlement_amount DESC
+                LIMIT ?
+            """, (f"%{nature_of_suit}%", limit))
+        elif case_type:
+            cursor.execute("""
+                SELECT * FROM case_outcomes
+                WHERE case_type LIKE ?
+                ORDER BY settlement_amount DESC
+                LIMIT ?
+            """, (f"%{case_type}%", limit))
+        else:
+            cursor.execute("""
+                SELECT * FROM case_outcomes
+                ORDER BY settlement_amount DESC
+                LIMIT ?
+            """, (limit,))
+
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+
+    def get_outcome_stats(self) -> Dict:
+        """Get statistics on case outcomes."""
+        conn = self._get_conn()
+        cursor = conn.cursor()
+
+        stats = {}
+
+        try:
+            cursor.execute("SELECT COUNT(*) as count FROM case_outcomes")
+            stats['total_outcomes'] = cursor.fetchone()['count']
+
+            cursor.execute("SELECT AVG(settlement_amount) as avg FROM case_outcomes WHERE settlement_amount > 0")
+            row = cursor.fetchone()
+            stats['avg_settlement'] = row['avg'] if row['avg'] else 0
+
+            cursor.execute("SELECT AVG(days_to_resolution) as avg FROM case_outcomes WHERE days_to_resolution > 0")
+            row = cursor.fetchone()
+            stats['avg_days_to_resolution'] = row['avg'] if row['avg'] else 0
+
+            cursor.execute("SELECT AVG(outcome_ratio) as avg FROM case_outcomes WHERE outcome_ratio > 0")
+            row = cursor.fetchone()
+            stats['avg_outcome_ratio'] = row['avg'] if row['avg'] else 0
+
+            cursor.execute("""
+                SELECT nature_of_suit, COUNT(*) as count, AVG(settlement_amount) as avg_amount
+                FROM case_outcomes
+                WHERE nature_of_suit IS NOT NULL
+                GROUP BY nature_of_suit
+                ORDER BY count DESC
+                LIMIT 10
+            """)
+            stats['by_nature_of_suit'] = [dict(row) for row in cursor.fetchall()]
+
+        except Exception as e:
+            print(f"Error getting outcome stats: {e}")
+
+        conn.close()
+        return stats
+
     # === Stats ===
 
     def get_stats(self) -> Dict:

@@ -95,6 +95,58 @@ CREATE TABLE IF NOT EXISTS documentcloud (
     imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Case outcomes: links complaints to final settlements
+CREATE TABLE IF NOT EXISTS case_outcomes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    -- Case identification
+    case_number TEXT,
+    case_title TEXT,
+    court TEXT,
+    jurisdiction TEXT,  -- 'state' or 'federal'
+    state TEXT,  -- if state court
+    nature_of_suit TEXT,
+    case_type TEXT,
+
+    -- Complaint info
+    complaint_date TEXT,
+    complaint_url TEXT,
+    complaint_pdf_url TEXT,
+    initial_demand REAL,
+    initial_demand_formatted TEXT,
+    plaintiff TEXT,
+    defendant TEXT,
+    class_definition TEXT,  -- class description if class action
+    estimated_class_size INTEGER,
+
+    -- Settlement info
+    settlement_date TEXT,
+    settlement_amount REAL,
+    settlement_amount_formatted TEXT,
+    settlement_url TEXT,
+    settlement_pdf_url TEXT,
+    attorney_fees REAL,
+    attorney_fees_formatted TEXT,
+    actual_class_size INTEGER,  -- actual claimants
+    per_claimant_amount REAL,
+    claims_deadline TEXT,
+
+    -- Computed/derived
+    days_to_resolution INTEGER,  -- complaint_date to settlement_date
+    outcome_ratio REAL,  -- settlement / initial_demand
+
+    -- Linking to other tables
+    settlement_id INTEGER,  -- FK to settlements table
+    federal_case_id INTEGER,  -- FK to federal_cases
+    state_case_id INTEGER,  -- FK to state_cases
+
+    -- Metadata
+    source TEXT,
+    raw_data TEXT,  -- JSON blob for extra fields
+    guid TEXT UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Feed metadata
 CREATE TABLE IF NOT EXISTS feeds (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -119,3 +171,8 @@ CREATE INDEX IF NOT EXISTS idx_docket_entries_case ON docket_entries(case_number
 CREATE INDEX IF NOT EXISTS idx_docket_entries_type ON docket_entries(entry_type);
 CREATE INDEX IF NOT EXISTS idx_docket_entries_opinion ON docket_entries(is_opinion);
 CREATE INDEX IF NOT EXISTS idx_docket_entries_state ON docket_entries(state);
+CREATE INDEX IF NOT EXISTS idx_case_outcomes_case ON case_outcomes(case_number);
+CREATE INDEX IF NOT EXISTS idx_case_outcomes_court ON case_outcomes(court);
+CREATE INDEX IF NOT EXISTS idx_case_outcomes_settlement_date ON case_outcomes(settlement_date);
+CREATE INDEX IF NOT EXISTS idx_case_outcomes_amount ON case_outcomes(settlement_amount);
+CREATE INDEX IF NOT EXISTS idx_case_outcomes_nature ON case_outcomes(nature_of_suit);
