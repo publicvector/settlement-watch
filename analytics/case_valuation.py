@@ -256,6 +256,9 @@ class CaseValuator:
         defendant_type: Optional[str] = None,
         class_size_category: Optional[str] = None,
         custom_multiplier: float = 1.0,
+        use_ml_multipliers: bool = False,
+        court: Optional[str] = None,
+        defendant: Optional[str] = None,
     ) -> Optional[ValuationResult]:
         """
         Estimate case value based on cause of action and factors.
@@ -266,6 +269,9 @@ class CaseValuator:
             defendant_type: Size/type of defendant (e.g., "fortune_500")
             class_size_category: Size of class (e.g., "large", "medium")
             custom_multiplier: Additional multiplier for special circumstances
+            use_ml_multipliers: Use data-driven multipliers from ML module
+            court: Court code for ML multipliers (e.g., 'cacd')
+            defendant: Defendant name for ML multipliers
 
         Returns:
             ValuationResult with estimates and confidence metrics,
@@ -300,14 +306,39 @@ class CaseValuator:
         total_multiplier = custom_multiplier
         multipliers_applied = {'custom': custom_multiplier}
 
-        if jurisdiction:
+        # Try ML-based multipliers if requested
+        if use_ml_multipliers and (court or defendant):
+            try:
+                from ml.features.historical import HistoricalFeatureExtractor
+                hist = HistoricalFeatureExtractor()
+
+                if court:
+                    ml_jur_mult = hist.get_court_multiplier(court)
+                    if ml_jur_mult != 1.0:
+                        total_multiplier *= ml_jur_mult
+                        multipliers_applied['jurisdiction_ml'] = ml_jur_mult
+
+                if defendant:
+                    def_history = hist.get_defendant_history(defendant)
+                    if def_history and def_history.get('avg_settlement', 0) > 0:
+                        # Scale multiplier based on defendant's historical payments
+                        national_median = hist._compute_national_median()
+                        if national_median > 0:
+                            def_mult = def_history['avg_settlement'] / national_median
+                            def_mult = max(0.5, min(2.0, def_mult))  # Clip to reasonable range
+                            total_multiplier *= def_mult
+                            multipliers_applied['defendant_ml'] = def_mult
+            except ImportError:
+                pass  # ML module not available, fall through to static multipliers
+
+        if jurisdiction and 'jurisdiction_ml' not in multipliers_applied:
             jur_mult = self.JURISDICTION_MULTIPLIERS.get(
                 jurisdiction.lower(), 1.0
             )
             total_multiplier *= jur_mult
             multipliers_applied['jurisdiction'] = jur_mult
 
-        if defendant_type:
+        if defendant_type and 'defendant_ml' not in multipliers_applied:
             def_mult = self.DEFENDANT_MULTIPLIERS.get(
                 defendant_type.lower(), 1.0
             )

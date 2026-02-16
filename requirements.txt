@@ -21,3 +21,10 @@ python-dateutil>=2.8.0
 pytesseract>=0.3.10
 pdf2image>=1.16.0
 Pillow>=10.0.0
+
+# ML dependencies for predictive analytics
+scikit-learn>=1.3.0
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.11.0
+joblib>=1.3.0
