@@ -1,0 +1,74 @@
+{
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxDuration": 60
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "api/index.py"
+    }
+  ],
+  "env": {
+    "VERCEL": "1"
+  },
+  "crons": [
+    {
+      "path": "/v1/rss/poll?batch=10&offset=0",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/v1/rss/poll?batch=10&offset=10",
+      "schedule": "5 * * * *"
+    },
+    {
+      "path": "/v1/rss/poll?batch=10&offset=20",
+      "schedule": "10 * * * *"
+    },
+    {
+      "path": "/v1/rss/poll?batch=10&offset=30",
+      "schedule": "15 * * * *"
+    },
+    {
+      "path": "/v1/rss/poll?batch=10&offset=40",
+      "schedule": "20 * * * *"
+    },
+    {
+      "path": "/v1/rss/poll?batch=10&offset=50",
+      "schedule": "25 * * * *"
+    },
+    {
+      "path": "/v1/rss/poll?batch=10&offset=60",
+      "schedule": "30 * * * *"
+    },
+    {
+      "path": "/v1/rss/poll?batch=10&offset=70",
+      "schedule": "35 * * * *"
+    },
+    {
+      "path": "/v1/rss/poll?batch=10&offset=80",
+      "schedule": "40 * * * *"
+    },
+    {
+      "path": "/v1/rss/poll?batch=10&offset=90",
+      "schedule": "45 * * * *"
+    },
+    {
+      "path": "/v1/recap/enrich-batch?limit=50",
+      "schedule": "50 * * * *"
+    },
+    {
+      "path": "/v1/cron/newsletters/daily",
+      "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/v1/cron/newsletters/weekly",
+      "schedule": "0 12 * * 1"
+    }
+  ]
+}

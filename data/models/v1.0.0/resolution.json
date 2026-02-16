@@ -1,0 +1,47 @@
+{
+  "model_name": "resolution",
+  "model_type": "RandomForestClassifier",
+  "version": "v1.0.0",
+  "created_at": "2026-02-16T08:41:27.523191",
+  "training_samples": 871,
+  "feature_names": [
+    "court_encoded",
+    "nos_encoded",
+    "nos_category_encoded",
+    "defendant_type_encoded",
+    "is_class_action",
+    "is_pro_se",
+    "is_mdl",
+    "jurisdiction_multiplier",
+    "court_median_settlement_log",
+    "court_case_count",
+    "court_dismissal_rate",
+    "defendant_total_paid_log",
+    "defendant_avg_settlement_log",
+    "defendant_case_count",
+    "nos_median_settlement_log",
+    "nos_case_count",
+    "judge_mtd_rate",
+    "judge_case_count"
+  ],
+  "feature_count": 18,
+  "hyperparameters": {
+    "n_estimators": 100,
+    "max_depth": 10,
+    "class_weight": "balanced",
+    "classes": [
+      "dismissal",
+      "settlement"
+    ]
+  },
+  "metrics": {
+    "cv_accuracy_mean": 0.9988571428571429,
+    "cv_accuracy_std": 0.0022857142857142685,
+    "n_classes": 2,
+    "class_distribution": {
+      "dismissal": 1,
+      "settlement": 870
+    }
+  },
+  "description": "Case resolution path classifier"
+}

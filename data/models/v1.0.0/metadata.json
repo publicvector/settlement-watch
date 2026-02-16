@@ -1,0 +1,12 @@
+{
+  "version": "v1.0.0",
+  "trained_at": "2026-02-16T08:41:28.836996",
+  "training_samples": 871,
+  "models": [
+    "dismissal",
+    "value",
+    "resolution",
+    "duration"
+  ],
+  "feature_count": 18
+}
