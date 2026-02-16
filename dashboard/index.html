@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settlement Watch Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(0,0,0,0.3);
+            padding: 20px 40px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .header p {
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .kpi-label {
+            font-size: 13px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #4fc3f7;
+        }
+
+        .kpi-card.green .kpi-value { color: #66bb6a; }
+        .kpi-card.orange .kpi-value { color: #ffa726; }
+        .kpi-card.purple .kpi-value { color: #ab47bc; }
+        .kpi-card.red .kpi-value { color: #ef5350; }
+
+        /* Chart Grid */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .chart-card.full-width {
+            grid-column: span 2;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .chart-container.tall {
+            height: 400px;
+        }
+
+        /* Tables */
+        .table-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 25px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        th {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            font-weight: 600;
+        }
+
+        td {
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .amount {
+            font-family: 'SF Mono', Monaco, monospace;
+            color: #4fc3f7;
+        }
+
+        .amount.large {
+            color: #66bb6a;
+            font-weight: 600;
+        }
+
+        /* Value Calculator */
+        .calculator {
+            background: linear-gradient(135deg, #1e3a5f 0%, #1a2d47 100%);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid rgba(79, 195, 247, 0.3);
+            margin-bottom: 25px;
+        }
+
+        .calculator h2 {
+            margin-bottom: 20px;
+            color: #4fc3f7;
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .calc-field label {
+            display: block;
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .calc-field select, .calc-field input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .calc-result {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .calc-result .label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .calc-result .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #66bb6a;
+        }
+
+        .calc-result .range {
+            font-size: 14px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+            .chart-card.full-width {
+                grid-column: span 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Progress bars */
+        .progress-bar {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4fc3f7, #66bb6a);
+            border-radius: 4px;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge.high { background: rgba(102, 187, 106, 0.2); color: #66bb6a; }
+        .badge.medium { background: rgba(255, 167, 38, 0.2); color: #ffa726; }
+        .badge.low { background: rgba(239, 83, 80, 0.2); color: #ef5350; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Settlement Watch Analytics</h1>
+        <p>Comprehensive litigation outcome intelligence across 717 cases totaling $752 billion</p>
+    </div>
+
+    <div class="container">
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Cases</div>
+                <div class="kpi-value">717</div>
+            </div>
+            <div class="kpi-card green">
+                <div class="kpi-label">Total Settlement Value</div>
+                <div class="kpi-value">$752B</div>
+            </div>
+            <div class="kpi-card orange">
+                <div class="kpi-label">Average Settlement</div>
+                <div class="kpi-value">$1.1B</div>
+            </div>
+            <div class="kpi-card purple">
+                <div class="kpi-label">Median Settlement</div>
+                <div class="kpi-value">$78M</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Unique Courts</div>
+                <div class="kpi-value">151</div>
+            </div>
+            <div class="kpi-card red">
+                <div class="kpi-label">Cause Categories</div>
+                <div class="kpi-value">49</div>
+            </div>
+        </div>
+
+        <!-- Value Calculator -->
+        <div class="calculator">
+            <h2>Case Value Estimator</h2>
+            <div class="calc-grid">
+                <div class="calc-field">
+                    <label>Cause of Action</label>
+                    <select id="calc-cause" onchange="calculateValue()">
+                        <option value="product_liability" data-median="120" data-p25="50" data-p75="651">Product Liability</option>
+                        <option value="securities" data-median="80" data-p25="20" data-p75="200">Securities Fraud</option>
+                        <option value="antitrust" data-median="275" data-p25="84" data-p75="630">Antitrust</option>
+                        <option value="environmental" data-median="1166" data-p25="79" data-p75="10000">Environmental</option>
+                        <option value="data_breach" data-median="14" data-p25="6" data-p75="60">Data Breach</option>
+                        <option value="consumer" data-median="27" data-p25="6" data-p75="100">Consumer Protection</option>
+                        <option value="employment" data-median="80" data-p25="12" data-p75="197">Employment</option>
+                        <option value="bipa" data-median="100" data-p25="50" data-p75="650">BIPA (Biometric)</option>
+                        <option value="tcpa" data-median="33" data-p25="24" data-p75="47">TCPA</option>
+                        <option value="civil_rights" data-median="99" data-p25="20" data-p75="160">Civil Rights</option>
+                    </select>
+                </div>
+                <div class="calc-field">
+                    <label>Jurisdiction</label>
+                    <select id="calc-jurisdiction" onchange="calculateValue()">
+                        <option value="1.0">National Average</option>
+                        <option value="1.25">California (+25%)</option>
+                        <option value="1.20">New York (+20%)</option>
+                        <option value="1.20">9th Circuit (+20%)</option>
+                        <option value="1.15">2nd Circuit (+15%)</option>
+                        <option value="1.10">Texas (+10%)</option>
+                        <option value="1.05">Federal (other) (+5%)</option>
+                        <option value="0.95">State (other) (-5%)</option>
+                    </select>
+                </div>
+                <div class="calc-field">
+                    <label>Defendant Type</label>
+                    <select id="calc-defendant" onchange="calculateValue()">
+                        <option value="1.0">Mid-Size Company</option>
+                        <option value="1.50">Fortune 100 (+50%)</option>
+                        <option value="1.25">Fortune 500 (+25%)</option>
+                        <option value="1.10">Large Corporation (+10%)</option>
+                        <option value="0.90">Government (-10%)</option>
+                        <option value="0.75">Small Company (-25%)</option>
+                    </select>
+                </div>
+                <div class="calc-field">
+                    <label>Class Size</label>
+                    <select id="calc-class" onchange="calculateValue()">
+                        <option value="1.0">Medium (10K-100K)</option>
+                        <option value="1.30">Mega (1M+) (+30%)</option>
+                        <option value="1.15">Large (100K-1M) (+15%)</option>
+                        <option value="0.85">Small (1K-10K) (-15%)</option>
+                        <option value="0.60">Individual (-40%)</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                <div class="calc-result">
+                    <div class="label">Conservative (P25)</div>
+                    <div class="value" id="result-low">$50M</div>
+                </div>
+                <div class="calc-result">
+                    <div class="label">Expected (Median)</div>
+                    <div class="value" id="result-mid">$120M</div>
+                </div>
+                <div class="calc-result">
+                    <div class="label">Aggressive (P75)</div>
+                    <div class="value" id="result-high">$651M</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="chart-grid">
+            <div class="chart-card">
+                <div class="chart-title">Settlement Distribution by Size</div>
+                <div class="chart-container">
+                    <canvas id="sizeDistChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Total Value by Cause of Action</div>
+                <div class="chart-container">
+                    <canvas id="causeValueChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div class="chart-grid">
+            <div class="chart-card">
+                <div class="chart-title">Top 10 Defendants by Total Paid</div>
+                <div class="chart-container tall">
+                    <canvas id="defendantChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Cases by Source</div>
+                <div class="chart-container tall">
+                    <canvas id="sourceChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benchmarks Table -->
+        <div class="table-card">
+            <div class="chart-title">Valuation Benchmarks by Cause of Action</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cause of Action</th>
+                        <th>Cases</th>
+                        <th>Median</th>
+                        <th>P25 (Low)</th>
+                        <th>P75 (High)</th>
+                        <th>Total Value</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Pharmaceutical</td>
+                        <td>10</td>
+                        <td class="amount large">$1,536M</td>
+                        <td class="amount">$270M</td>
+                        <td class="amount">$5,000M</td>
+                        <td class="amount">$25.2B</td>
+                        <td><span class="badge medium">Medium</span></td>
+                    </tr>
+                    <tr>
+                        <td>Environmental</td>
+                        <td>16</td>
+                        <td class="amount large">$1,166M</td>
+                        <td class="amount">$79M</td>
+                        <td class="amount">$10,000M</td>
+                        <td class="amount">$63.5B</td>
+                        <td><span class="badge medium">Medium</span></td>
+                    </tr>
+                    <tr>
+                        <td>Antitrust</td>
+                        <td>37</td>
+                        <td class="amount large">$275M</td>
+                        <td class="amount">$84M</td>
+                        <td class="amount">$630M</td>
+                        <td class="amount">$33.1B</td>
+                        <td><span class="badge high">High</span></td>
+                    </tr>
+                    <tr>
+                        <td>Sexual Abuse</td>
+                        <td>9</td>
+                        <td class="amount">$230M</td>
+                        <td class="amount">$31M</td>
+                        <td class="amount">$500M</td>
+                        <td class="amount">$6.1B</td>
+                        <td><span class="badge medium">Medium</span></td>
+                    </tr>
+                    <tr>
+                        <td>Product Liability</td>
+                        <td>48</td>
+                        <td class="amount">$120M</td>
+                        <td class="amount">$50M</td>
+                        <td class="amount">$651M</td>
+                        <td class="amount">$232.0B</td>
+                        <td><span class="badge high">High</span></td>
+                    </tr>
+                    <tr>
+                        <td>BIPA (Biometric)</td>
+                        <td>12</td>
+                        <td class="amount">$100M</td>
+                        <td class="amount">$50M</td>
+                        <td class="amount">$650M</td>
+                        <td class="amount">$4.7B</td>
+                        <td><span class="badge medium">Medium</span></td>
+                    </tr>
+                    <tr>
+                        <td>Civil Rights</td>
+                        <td>26</td>
+                        <td class="amount">$99M</td>
+                        <td class="amount">$20M</td>
+                        <td class="amount">$160M</td>
+                        <td class="amount">$6.6B</td>
+                        <td><span class="badge high">High</span></td>
+                    </tr>
+                    <tr>
+                        <td>Securities</td>
+                        <td>91</td>
+                        <td class="amount">$80M</td>
+                        <td class="amount">$20M</td>
+                        <td class="amount">$200M</td>
+                        <td class="amount">$64.5B</td>
+                        <td><span class="badge high">High</span></td>
+                    </tr>
+                    <tr>
+                        <td>Employment</td>
+                        <td>26</td>
+                        <td class="amount">$80M</td>
+                        <td class="amount">$12M</td>
+                        <td class="amount">$197M</td>
+                        <td class="amount">$2.7B</td>
+                        <td><span class="badge high">High</span></td>
+                    </tr>
+                    <tr>
+                        <td>TCPA</td>
+                        <td>34</td>
+                        <td class="amount">$33M</td>
+                        <td class="amount">$24M</td>
+                        <td class="amount">$47M</td>
+                        <td class="amount">$1.9B</td>
+                        <td><span class="badge high">High</span></td>
+                    </tr>
+                    <tr>
+                        <td>Data Breach</td>
+                        <td>42</td>
+                        <td class="amount">$14M</td>
+                        <td class="amount">$6M</td>
+                        <td class="amount">$60M</td>
+                        <td class="amount">$2.2B</td>
+                        <td><span class="badge high">High</span></td>
+                    </tr>
+                    <tr>
+                        <td>Consumer Protection</td>
+                        <td>26</td>
+                        <td class="amount">$13M</td>
+                        <td class="amount">$3M</td>
+                        <td class="amount">$23M</td>
+                        <td class="amount">$1.1B</td>
+                        <td><span class="badge high">High</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Top Defendants Table -->
+        <div class="table-card">
+            <div class="chart-title">Top Repeat Defendants (Multiple Cases)</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Defendant</th>
+                        <th>Cases</th>
+                        <th>Total Paid</th>
+                        <th>Avg Payment</th>
+                        <th>Risk Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Johnson & Johnson</td>
+                        <td>6</td>
+                        <td class="amount large">$16.4B</td>
+                        <td class="amount">$2.7B</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 90%"></div></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Wells Fargo</td>
+                        <td>3</td>
+                        <td class="amount large">$3.2B</td>
+                        <td class="amount">$1.1B</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 75%"></div></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Walmart</td>
+                        <td>4</td>
+                        <td class="amount">$3.2B</td>
+                        <td class="amount">$788M</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 70%"></div></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Bank of America</td>
+                        <td>2</td>
+                        <td class="amount large">$19.1B</td>
+                        <td class="amount">$9.5B</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 85%"></div></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>3M</td>
+                        <td>2</td>
+                        <td class="amount">$6.5B</td>
+                        <td class="amount">$3.2B</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 80%"></div></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Meta</td>
+                        <td>2</td>
+                        <td class="amount">$2.0B</td>
+                        <td class="amount">$985M</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 65%"></div></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Uber/Lyft</td>
+                        <td>3</td>
+                        <td class="amount">$643M</td>
+                        <td class="amount">$214M</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 55%"></div></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Google</td>
+                        <td>2</td>
+                        <td class="amount">$492M</td>
+                        <td class="amount">$246M</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 50%"></div></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Chart.js configuration
+        Chart.defaults.color = '#888';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
+
+        // Size Distribution Chart
+        new Chart(document.getElementById('sizeDistChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['$1B+', '$100M-$1B', '$10M-$100M', '$1M-$10M', '<$1M'],
+                datasets: [{
+                    data: [94, 195, 245, 125, 8],
+                    backgroundColor: [
+                        '#4fc3f7',
+                        '#66bb6a',
+                        '#ffa726',
+                        '#ab47bc',
+                        '#ef5350'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { padding: 15 }
+                    }
+                }
+            }
+        });
+
+        // Cause Value Chart
+        new Chart(document.getElementById('causeValueChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Product Liab.', 'Securities', 'Environmental', 'Antitrust', 'Consumer', 'Pharmaceutical', 'Healthcare', 'Civil Rights'],
+                datasets: [{
+                    label: 'Total Value ($B)',
+                    data: [232, 64.5, 63.5, 33.1, 27.7, 25.2, 13.3, 6.6],
+                    backgroundColor: '#4fc3f7',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255,255,255,0.05)' }
+                    },
+                    y: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Defendant Chart
+        new Chart(document.getElementById('defendantChart'), {
+            type: 'bar',
+            data: {
+                labels: ['McKesson/Cardinal', 'BP', 'Bank of America', 'J&J', 'Volkswagen', 'PG&E', 'JPMorgan', 'FTX', 'Bayer/Monsanto', 'Purdue/Sackler'],
+                datasets: [{
+                    label: 'Total Paid ($B)',
+                    data: [21.0, 20.8, 19.1, 16.4, 14.7, 13.5, 13.0, 12.7, 10.9, 7.4],
+                    backgroundColor: '#66bb6a',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255,255,255,0.05)' }
+                    },
+                    y: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Source Chart
+        new Chart(document.getElementById('sourceChart'), {
+            type: 'pie',
+            data: {
+                labels: ['Top Class Actions', 'Historical', 'TopVerdict', 'Expert Institute', 'DOJ', 'TopClassActions', 'NY AG', 'Other'],
+                datasets: [{
+                    data: [259, 217, 40, 40, 22, 21, 16, 137],
+                    backgroundColor: [
+                        '#4fc3f7',
+                        '#66bb6a',
+                        '#ffa726',
+                        '#ab47bc',
+                        '#ef5350',
+                        '#26c6da',
+                        '#7e57c2',
+                        '#78909c'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { padding: 10, font: { size: 11 } }
+                    }
+                }
+            }
+        });
+
+        // Value Calculator
+        function calculateValue() {
+            const causeSelect = document.getElementById('calc-cause');
+            const selectedOption = causeSelect.options[causeSelect.selectedIndex];
+
+            const median = parseFloat(selectedOption.dataset.median);
+            const p25 = parseFloat(selectedOption.dataset.p25);
+            const p75 = parseFloat(selectedOption.dataset.p75);
+
+            const jurisdiction = parseFloat(document.getElementById('calc-jurisdiction').value);
+            const defendant = parseFloat(document.getElementById('calc-defendant').value);
+            const classSize = parseFloat(document.getElementById('calc-class').value);
+
+            const multiplier = jurisdiction * defendant * classSize;
+
+            const low = p25 * multiplier;
+            const mid = median * multiplier;
+            const high = p75 * multiplier;
+
+            document.getElementById('result-low').textContent = formatCurrency(low);
+            document.getElementById('result-mid').textContent = formatCurrency(mid);
+            document.getElementById('result-high').textContent = formatCurrency(high);
+        }
+
+        function formatCurrency(millions) {
+            if (millions >= 1000) {
+                return '$' + (millions / 1000).toFixed(1) + 'B';
+            }
+            return '$' + millions.toFixed(0) + 'M';
+        }
+
+        // Initialize
+        calculateValue();
+    </script>
+</body>
+</html>

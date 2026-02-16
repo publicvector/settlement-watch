@@ -1,0 +1,1464 @@
+{
+  "generated_at": "2026-02-16T00:05:22.333997",
+  "courts": [
+    {
+      "name": "U.S. District Court E.D. Louisiana",
+      "case_count": 2,
+      "total_settlements": 30000000000.0,
+      "avg_settlement": 15000000000.0
+    },
+    {
+      "name": "U.S. District Court for the District of South Carolina",
+      "case_count": 2,
+      "total_settlements": 11485000000.0,
+      "avg_settlement": 5742500000.0
+    },
+    {
+      "name": "IRS",
+      "case_count": 3,
+      "total_settlements": 14063000000.0,
+      "avg_settlement": 4687666666.666667
+    },
+    {
+      "name": "S.D. New York",
+      "case_count": 4,
+      "total_settlements": 12870600000.0,
+      "avg_settlement": 3217650000.0
+    },
+    {
+      "name": "Multistate",
+      "case_count": 6,
+      "total_settlements": 15712250000.0,
+      "avg_settlement": 2618708333.3333335
+    },
+    {
+      "name": "Los Angeles Superior Court",
+      "case_count": 2,
+      "total_settlements": 4966000000.0,
+      "avg_settlement": 2483000000.0
+    },
+    {
+      "name": "Multistate Settlement",
+      "case_count": 4,
+      "total_settlements": 7906000000.0,
+      "avg_settlement": 1976500000.0
+    },
+    {
+      "name": "Delaware Superior Court",
+      "case_count": 2,
+      "total_settlements": 3087500000.0,
+      "avg_settlement": 1543750000.0
+    },
+    {
+      "name": "DOJ",
+      "case_count": 4,
+      "total_settlements": 5887000000.0,
+      "avg_settlement": 1471750000.0
+    },
+    {
+      "name": "Nevada State Court",
+      "case_count": 6,
+      "total_settlements": 6666000000.0,
+      "avg_settlement": 1111000000.0
+    },
+    {
+      "name": "EPA Administrative",
+      "case_count": 2,
+      "total_settlements": 2166000000.0,
+      "avg_settlement": 1083000000.0
+    },
+    {
+      "name": "U.S. District Court for the Northern District of California",
+      "case_count": 3,
+      "total_settlements": 2995000000.0,
+      "avg_settlement": 998333333.3333334
+    },
+    {
+      "name": "New Jersey Court",
+      "case_count": 3,
+      "total_settlements": 2451640000.0,
+      "avg_settlement": 817213333.3333334
+    },
+    {
+      "name": "Pennsylvania State Court",
+      "case_count": 4,
+      "total_settlements": 3122000000.0,
+      "avg_settlement": 780500000.0
+    },
+    {
+      "name": "Connecticut Court",
+      "case_count": 2,
+      "total_settlements": 1439500000.0,
+      "avg_settlement": 719750000.0
+    },
+    {
+      "name": "Delaware Court of Chancery",
+      "case_count": 4,
+      "total_settlements": 2125500000.0,
+      "avg_settlement": 531375000.0
+    },
+    {
+      "name": "California State Court",
+      "case_count": 17,
+      "total_settlements": 8521400907.0,
+      "avg_settlement": 501258876.88235295
+    },
+    {
+      "name": "South Carolina State Court",
+      "case_count": 2,
+      "total_settlements": 801400000.0,
+      "avg_settlement": 400700000.0
+    },
+    {
+      "name": "EU Commission",
+      "case_count": 2,
+      "total_settlements": 800000000.0,
+      "avg_settlement": 400000000.0
+    },
+    {
+      "name": "State Court",
+      "case_count": 2,
+      "total_settlements": 616000000.0,
+      "avg_settlement": 308000000.0
+    },
+    {
+      "name": "Missouri State Court",
+      "case_count": 4,
+      "total_settlements": 1163900000.0,
+      "avg_settlement": 290975000.0
+    },
+    {
+      "name": "E.D. Texas",
+      "case_count": 4,
+      "total_settlements": 1152670700.0,
+      "avg_settlement": 288167675.0
+    },
+    {
+      "name": "Texas State Court",
+      "case_count": 10,
+      "total_settlements": 2612970000.0,
+      "avg_settlement": 261297000.0
+    },
+    {
+      "name": "Massachusetts State Court",
+      "case_count": 2,
+      "total_settlements": 494600000.0,
+      "avg_settlement": 247300000.0
+    },
+    {
+      "name": "Federal Court",
+      "case_count": 245,
+      "total_settlements": 60446585145.0,
+      "avg_settlement": 246720755.69387755
+    },
+    {
+      "name": "Louisiana State Court",
+      "case_count": 3,
+      "total_settlements": 642141369.0,
+      "avg_settlement": 214047123.0
+    },
+    {
+      "name": "Federal Bankruptcy Court",
+      "case_count": 3,
+      "total_settlements": 581000000.0,
+      "avg_settlement": 193666666.66666666
+    },
+    {
+      "name": "Cook County Courts",
+      "case_count": 2,
+      "total_settlements": 338700000.0,
+      "avg_settlement": 169350000.0
+    },
+    {
+      "name": "Oregon State Court",
+      "case_count": 2,
+      "total_settlements": 322292533.0,
+      "avg_settlement": 161146266.5
+    },
+    {
+      "name": "FTC",
+      "case_count": 4,
+      "total_settlements": 554100000.0,
+      "avg_settlement": 138525000.0
+    },
+    {
+      "name": "SEC",
+      "case_count": 3,
+      "total_settlements": 414000000.0,
+      "avg_settlement": 138000000.0
+    },
+    {
+      "name": "MDL Federal Court",
+      "case_count": 4,
+      "total_settlements": 494000000.0,
+      "avg_settlement": 123500000.0
+    },
+    {
+      "name": "Florida State Court",
+      "case_count": 8,
+      "total_settlements": 958553162.0,
+      "avg_settlement": 119819145.25
+    },
+    {
+      "name": "Illinois State Court",
+      "case_count": 7,
+      "total_settlements": 830209000.0,
+      "avg_settlement": 118601285.71428572
+    },
+    {
+      "name": "Washington State Court",
+      "case_count": 6,
+      "total_settlements": 707158996.0,
+      "avg_settlement": 117859832.66666667
+    },
+    {
+      "name": "Arizona State Court",
+      "case_count": 2,
+      "total_settlements": 230187500.0,
+      "avg_settlement": 115093750.0
+    },
+    {
+      "name": "NY Attorney General",
+      "case_count": 3,
+      "total_settlements": 343600000.0,
+      "avg_settlement": 114533333.33333333
+    },
+    {
+      "name": "FCC",
+      "case_count": 5,
+      "total_settlements": 560500000.0,
+      "avg_settlement": 112100000.0
+    },
+    {
+      "name": "U.S. District Court for the Southern District of New York",
+      "case_count": 2,
+      "total_settlements": 220000000.0,
+      "avg_settlement": 110000000.0
+    },
+    {
+      "name": "Indiana State Court",
+      "case_count": 2,
+      "total_settlements": 219687491.0,
+      "avg_settlement": 109843745.5
+    },
+    {
+      "name": "Colorado State Court",
+      "case_count": 2,
+      "total_settlements": 212349380.0,
+      "avg_settlement": 106174690.0
+    },
+    {
+      "name": "D. Delaware",
+      "case_count": 4,
+      "total_settlements": 419030221.0,
+      "avg_settlement": 104757555.25
+    },
+    {
+      "name": "N.D. Illinois",
+      "case_count": 3,
+      "total_settlements": 310625000.0,
+      "avg_settlement": 103541666.66666667
+    },
+    {
+      "name": "Massachusetts Court",
+      "case_count": 2,
+      "total_settlements": 177275000.0,
+      "avg_settlement": 88637500.0
+    },
+    {
+      "name": "CFPB",
+      "case_count": 6,
+      "total_settlements": 500550000.0,
+      "avg_settlement": 83425000.0
+    },
+    {
+      "name": "Denver District Court",
+      "case_count": 2,
+      "total_settlements": 165260000.0,
+      "avg_settlement": 82630000.0
+    },
+    {
+      "name": "New York Court",
+      "case_count": 7,
+      "total_settlements": 536864000.0,
+      "avg_settlement": 76694857.14285715
+    },
+    {
+      "name": "Oklahoma State Court",
+      "case_count": 2,
+      "total_settlements": 142576640.0,
+      "avg_settlement": 71288320.0
+    },
+    {
+      "name": "New York State Court",
+      "case_count": 14,
+      "total_settlements": 937153813.0,
+      "avg_settlement": 66939558.071428575
+    },
+    {
+      "name": "Michigan State Court",
+      "case_count": 4,
+      "total_settlements": 255154000.0,
+      "avg_settlement": 63788500.0
+    }
+  ],
+  "defendants": [
+    {
+      "name": "Bank of America",
+      "case_count": 2,
+      "total_paid": 19050000000.0,
+      "avg_payment": 9525000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Johnson & Johnson",
+      "case_count": 6,
+      "total_paid": 16410350000.0,
+      "avg_payment": 2735058333.3333335,
+      "repeat_score": 90
+    },
+    {
+      "name": "Multiple Defendants",
+      "case_count": 3,
+      "total_paid": 9765250000.0,
+      "avg_payment": 3255083333.3333335,
+      "repeat_score": 45
+    },
+    {
+      "name": "3M",
+      "case_count": 2,
+      "total_paid": 6450000000.0,
+      "avg_payment": 3225000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Wells Fargo",
+      "case_count": 3,
+      "total_paid": 3238000000.0,
+      "avg_payment": 1079333333.3333333,
+      "repeat_score": 45
+    },
+    {
+      "name": "Walmart",
+      "case_count": 4,
+      "total_paid": 3152240000.0,
+      "avg_payment": 788060000.0,
+      "repeat_score": 60
+    },
+    {
+      "name": "Navient",
+      "case_count": 2,
+      "total_paid": 1970000000.0,
+      "avg_payment": 985000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Meta",
+      "case_count": 2,
+      "total_paid": 1970000000.0,
+      "avg_payment": 985000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Equifax",
+      "case_count": 2,
+      "total_paid": 715000000.0,
+      "avg_payment": 357500000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Epic Games",
+      "case_count": 2,
+      "total_paid": 646000000.0,
+      "avg_payment": 323000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Uber/Lyft",
+      "case_count": 3,
+      "total_paid": 643000000.0,
+      "avg_payment": 214333333.33333334,
+      "repeat_score": 45
+    },
+    {
+      "name": "Zimmer Biomet",
+      "case_count": 2,
+      "total_paid": 628000000.0,
+      "avg_payment": 314000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Google",
+      "case_count": 2,
+      "total_paid": 492000000.0,
+      "avg_payment": 246000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Teva Pharmaceuticals",
+      "case_count": 2,
+      "total_paid": 485000000.0,
+      "avg_payment": 242500000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "City of Chicago",
+      "case_count": 2,
+      "total_paid": 338700000.0,
+      "avg_payment": 169350000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "General Motors",
+      "case_count": 2,
+      "total_paid": 240000000.0,
+      "avg_payment": 120000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "City of New York",
+      "case_count": 2,
+      "total_paid": 234381253.0,
+      "avg_payment": 117190626.5,
+      "repeat_score": 30
+    },
+    {
+      "name": "USAA",
+      "case_count": 2,
+      "total_paid": 228000000.0,
+      "avg_payment": 114000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Apple Inc.",
+      "case_count": 2,
+      "total_paid": 184000000.0,
+      "avg_payment": 92000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Centers for Care LLC",
+      "case_count": 2,
+      "total_paid": 90000000.0,
+      "avg_payment": 45000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Brotherhood Mutual Insurance",
+      "case_count": 2,
+      "total_paid": 80000000.0,
+      "avg_payment": 40000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Grubhub",
+      "case_count": 3,
+      "total_paid": 35650000.0,
+      "avg_payment": 11883333.333333334,
+      "repeat_score": 45
+    },
+    {
+      "name": "DoorDash",
+      "case_count": 2,
+      "total_paid": 34750000.0,
+      "avg_payment": 17375000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Block Inc (Cash App)",
+      "case_count": 2,
+      "total_paid": 27500000.0,
+      "avg_payment": 13750000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "AT&T/Verizon/T-Mobile",
+      "case_count": 2,
+      "total_paid": 20500000.0,
+      "avg_payment": 10250000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Fulton Commons Care Center",
+      "case_count": 2,
+      "total_paid": 17200000.0,
+      "avg_payment": 8600000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "DraftKings",
+      "case_count": 2,
+      "total_paid": 13000000.0,
+      "avg_payment": 6500000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Chime Financial",
+      "case_count": 2,
+      "total_paid": 7050000.0,
+      "avg_payment": 3525000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Flux Power Holdings, Inc.",
+      "case_count": 2,
+      "total_paid": 2900000.0,
+      "avg_payment": 1450000.0,
+      "repeat_score": 30
+    }
+  ],
+  "causes": [
+    {
+      "name": "False Claims Act",
+      "count": 2,
+      "avg": 4850000000.0,
+      "min": 2900000000.0,
+      "max": 6800000000.0,
+      "percentile": 97.95918367346938
+    },
+    {
+      "name": "Product Liability",
+      "count": 48,
+      "avg": 4832913995.8125,
+      "min": 1750000.0,
+      "max": 206000000000.0,
+      "percentile": 95.91836734693877
+    },
+    {
+      "name": "Tax Fraud",
+      "count": 3,
+      "avg": 4687666666.666667,
+      "min": 263000000.0,
+      "max": 9100000000.0,
+      "percentile": 93.87755102040816
+    },
+    {
+      "name": "Environmental",
+      "count": 16,
+      "avg": 3968110783.3125,
+      "min": 1480000.0,
+      "max": 20000000000.0,
+      "percentile": 91.83673469387756
+    },
+    {
+      "name": "Pharmaceutical",
+      "count": 10,
+      "avg": 2519200000.0,
+      "min": 86000000.0,
+      "max": 7400000000.0,
+      "percentile": 89.79591836734694
+    },
+    {
+      "name": "Veterans",
+      "count": 1,
+      "avg": 1850000000.0,
+      "min": 1850000000.0,
+      "max": 1850000000.0,
+      "percentile": 87.75510204081633
+    },
+    {
+      "name": "Healthcare Fraud",
+      "count": 11,
+      "avg": 1211591447.2727273,
+      "min": 29000000.0,
+      "max": 5700000000.0,
+      "percentile": 85.71428571428571
+    },
+    {
+      "name": "Personal Injury",
+      "count": 1,
+      "avg": 1200000000.0,
+      "min": 1200000000.0,
+      "max": 1200000000.0,
+      "percentile": 83.6734693877551
+    },
+    {
+      "name": "Aviation",
+      "count": 1,
+      "avg": 1100000000.0,
+      "min": 1100000000.0,
+      "max": 1100000000.0,
+      "percentile": 81.63265306122449
+    },
+    {
+      "name": "Commercial Litigation",
+      "count": 8,
+      "avg": 928604232.5,
+      "min": 71970000.0,
+      "max": 5557465180.0,
+      "percentile": 79.59183673469387
+    },
+    {
+      "name": "Antitrust",
+      "count": 37,
+      "avg": 894219144.5135136,
+      "min": 15000000.0,
+      "max": 6200000000.0,
+      "percentile": 77.55102040816327
+    },
+    {
+      "name": "Securities",
+      "count": 91,
+      "avg": 709123296.7032967,
+      "min": 3300000.0,
+      "max": 12700000000.0,
+      "percentile": 75.51020408163265
+    },
+    {
+      "name": "Sexual Abuse",
+      "count": 9,
+      "avg": 674288888.8888888,
+      "min": 7000000.0,
+      "max": 4000000000.0,
+      "percentile": 73.46938775510205
+    },
+    {
+      "name": "FCPA",
+      "count": 3,
+      "avg": 570333333.3333334,
+      "min": 100000000.0,
+      "max": 950000000.0,
+      "percentile": 71.42857142857143
+    },
+    {
+      "name": "Wrongful Death",
+      "count": 6,
+      "avg": 480333333.3333333,
+      "min": 75000000.0,
+      "max": 779000000.0,
+      "percentile": 69.38775510204081
+    },
+    {
+      "name": "Consumer",
+      "count": 62,
+      "avg": 447364229.83870965,
+      "min": 514000.0,
+      "max": 14700000000.0,
+      "percentile": 67.3469387755102
+    },
+    {
+      "name": "BIPA",
+      "count": 12,
+      "avg": 392695833.3333333,
+      "min": 4500000.0,
+      "max": 1400000000.0,
+      "percentile": 65.3061224489796
+    },
+    {
+      "name": "Defamation",
+      "count": 7,
+      "avg": 376357142.85714287,
+      "min": 44400000.0,
+      "max": 1438000000.0,
+      "percentile": 63.26530612244898
+    },
+    {
+      "name": "Trucking Accident",
+      "count": 2,
+      "avg": 311000000.0,
+      "min": 160000000.0,
+      "max": 462000000.0,
+      "percentile": 61.224489795918366
+    },
+    {
+      "name": "Medical Malpractice",
+      "count": 9,
+      "avg": 302440836.5555556,
+      "min": 48100000.0,
+      "max": 951000000.0,
+      "percentile": 59.183673469387756
+    },
+    {
+      "name": "Civil Rights",
+      "count": 26,
+      "avg": 254458894.34615386,
+      "min": 700000.0,
+      "max": 3400000000.0,
+      "percentile": 57.14285714285714
+    },
+    {
+      "name": "Premises Liability",
+      "count": 8,
+      "avg": 207931250.0,
+      "min": 60650000.0,
+      "max": 535000000.0,
+      "percentile": 55.10204081632652
+    },
+    {
+      "name": "Healthcare",
+      "count": 3,
+      "avg": 197333333.33333334,
+      "min": 50000000.0,
+      "max": 450000000.0,
+      "percentile": 53.06122448979592
+    },
+    {
+      "name": "Patent",
+      "count": 8,
+      "avg": 188337615.125,
+      "min": 35000000.0,
+      "max": 847000000.0,
+      "percentile": 51.02040816326531
+    },
+    {
+      "name": "Motor Vehicle",
+      "count": 11,
+      "avg": 150386863.63636363,
+      "min": 72500000.0,
+      "max": 550000000.0,
+      "percentile": 48.97959183673469
+    },
+    {
+      "name": "Government Contract Fraud",
+      "count": 3,
+      "avg": 147000000.0,
+      "min": 4600000.0,
+      "max": 428000000.0,
+      "percentile": 46.93877551020408
+    },
+    {
+      "name": "Construction",
+      "count": 3,
+      "avg": 140150000.0,
+      "min": 68500000.0,
+      "max": 280000000.0,
+      "percentile": 44.89795918367347
+    },
+    {
+      "name": "Whistleblower",
+      "count": 3,
+      "avg": 138000000.0,
+      "min": 37000000.0,
+      "max": 279000000.0,
+      "percentile": 42.857142857142854
+    },
+    {
+      "name": "Employment Discrimination",
+      "count": 3,
+      "avg": 133000000.0,
+      "min": 36000000.0,
+      "max": 238000000.0,
+      "percentile": 40.816326530612244
+    },
+    {
+      "name": "Insurance",
+      "count": 5,
+      "avg": 126007848.0,
+      "min": 3000000.0,
+      "max": 421400000.0,
+      "percentile": 38.775510204081634
+    },
+    {
+      "name": "Employment",
+      "count": 26,
+      "avg": 105154769.0,
+      "min": 1600000.0,
+      "max": 328000000.0,
+      "percentile": 36.734693877551024
+    },
+    {
+      "name": "Workplace Injury",
+      "count": 1,
+      "avg": 91741369.0,
+      "min": 91741369.0,
+      "max": 91741369.0,
+      "percentile": 34.69387755102041
+    },
+    {
+      "name": "Wage & Hour",
+      "count": 9,
+      "avg": 90369444.44444445,
+      "min": 525000.0,
+      "max": 290000000.0,
+      "percentile": 32.6530612244898
+    },
+    {
+      "name": "Railroad",
+      "count": 1,
+      "avg": 90000000.0,
+      "min": 90000000.0,
+      "max": 90000000.0,
+      "percentile": 30.612244897959183
+    },
+    {
+      "name": "Insurance Bad Faith",
+      "count": 8,
+      "avg": 81438750.0,
+      "min": 3100000.0,
+      "max": 145260000.0,
+      "percentile": 28.57142857142857
+    },
+    {
+      "name": "Trademark",
+      "count": 1,
+      "avg": 71488012.0,
+      "min": 71488012.0,
+      "max": 71488012.0,
+      "percentile": 26.53061224489796
+    },
+    {
+      "name": "Privacy",
+      "count": 5,
+      "avg": 63032800.0,
+      "min": 2750000.0,
+      "max": 135000000.0,
+      "percentile": 24.489795918367346
+    },
+    {
+      "name": "TCPA",
+      "count": 34,
+      "avg": 54821176.47058824,
+      "min": 1400000.0,
+      "max": 300000000.0,
+      "percentile": 22.448979591836736
+    },
+    {
+      "name": "Data Breach",
+      "count": 42,
+      "avg": 51476904.76190476,
+      "min": 1190000.0,
+      "max": 350000000.0,
+      "percentile": 20.408163265306122
+    },
+    {
+      "name": "ERISA",
+      "count": 4,
+      "avg": 49625000.0,
+      "min": 20000000.0,
+      "max": 69000000.0,
+      "percentile": 18.367346938775512
+    },
+    {
+      "name": "Consumer Protection",
+      "count": 26,
+      "avg": 40645769.23076923,
+      "min": 250000.0,
+      "max": 520000000.0,
+      "percentile": 16.3265306122449
+    },
+    {
+      "name": "Energy",
+      "count": 13,
+      "avg": 27231739.153846152,
+      "min": 4100000.0,
+      "max": 182000000.0,
+      "percentile": 14.285714285714285
+    },
+    {
+      "name": "Elder Abuse/Neglect",
+      "count": 3,
+      "avg": 21866666.666666668,
+      "min": 8600000.0,
+      "max": 45000000.0,
+      "percentile": 12.244897959183673
+    },
+    {
+      "name": "Elder Abuse",
+      "count": 4,
+      "avg": 17525000.0,
+      "min": 4500000.0,
+      "max": 45000000.0,
+      "percentile": 10.204081632653061
+    },
+    {
+      "name": "Securities Fraud",
+      "count": 3,
+      "avg": 7350000.0,
+      "min": 4000000.0,
+      "max": 10000000.0,
+      "percentile": 8.16326530612245
+    },
+    {
+      "name": "Fair Housing",
+      "count": 3,
+      "avg": 6468333.333333333,
+      "min": 2130000.0,
+      "max": 15000000.0,
+      "percentile": 6.122448979591836
+    },
+    {
+      "name": "Education",
+      "count": 1,
+      "avg": 6000000.0,
+      "min": 6000000.0,
+      "max": 6000000.0,
+      "percentile": 4.081632653061225
+    },
+    {
+      "name": "False Advertising",
+      "count": 4,
+      "avg": 4618750.0,
+      "min": 100000.0,
+      "max": 9200000.0,
+      "percentile": 2.0408163265306123
+    },
+    {
+      "name": "Maritime",
+      "count": 1,
+      "avg": 1975000.0,
+      "min": 1975000.0,
+      "max": 1975000.0,
+      "percentile": 0.0
+    }
+  ],
+  "sources": [
+    {
+      "name": "CFTC",
+      "count": 1,
+      "avg": 12700000000.0,
+      "total": 12700000000.0
+    },
+    {
+      "name": "Top Class Actions",
+      "count": 24,
+      "avg": 10803074583.333334,
+      "total": 259273790000.0
+    },
+    {
+      "name": "IRS",
+      "count": 3,
+      "avg": 4687666666.666667,
+      "total": 14063000000.0
+    },
+    {
+      "name": "AHA News",
+      "count": 1,
+      "avg": 2800000000.0,
+      "total": 2800000000.0
+    },
+    {
+      "name": "Historical Records",
+      "count": 79,
+      "avg": 2742153797.468354,
+      "total": 216630150000.0
+    },
+    {
+      "name": "State AG",
+      "count": 4,
+      "avg": 1976500000.0,
+      "total": 7906000000.0
+    },
+    {
+      "name": "Washington Post",
+      "count": 2,
+      "avg": 1925000000.0,
+      "total": 3850000000.0
+    },
+    {
+      "name": "VA",
+      "count": 1,
+      "avg": 1850000000.0,
+      "total": 1850000000.0
+    },
+    {
+      "name": "NY AG",
+      "count": 9,
+      "avg": 1801150000.0,
+      "total": 16210350000.0
+    },
+    {
+      "name": "US News",
+      "count": 3,
+      "avg": 1516666666.6666667,
+      "total": 4550000000.0
+    },
+    {
+      "name": "Tribal Opioid Tracker",
+      "count": 1,
+      "avg": 1500000000.0,
+      "total": 1500000000.0
+    },
+    {
+      "name": "DOJ Enforcement",
+      "count": 4,
+      "avg": 1471750000.0,
+      "total": 5887000000.0
+    },
+    {
+      "name": "TX AG",
+      "count": 1,
+      "avg": 1400000000.0,
+      "total": 1400000000.0
+    },
+    {
+      "name": "SEC",
+      "count": 7,
+      "avg": 1343428571.4285715,
+      "total": 9404000000.0
+    },
+    {
+      "name": "DOJ",
+      "count": 17,
+      "avg": 1272390000.0,
+      "total": 21630630000.0
+    },
+    {
+      "name": "Drugwatch",
+      "count": 2,
+      "avg": 1225000000.0,
+      "total": 2450000000.0
+    },
+    {
+      "name": "EPA",
+      "count": 2,
+      "avg": 1083000000.0,
+      "total": 2166000000.0
+    },
+    {
+      "name": "ISS SCAS",
+      "count": 9,
+      "avg": 1074055555.5555556,
+      "total": 9666500000.0
+    },
+    {
+      "name": "Expert Institute",
+      "count": 40,
+      "avg": 988006500.0,
+      "total": 39520260000.0
+    },
+    {
+      "name": "DOJ/SEC",
+      "count": 1,
+      "avg": 950000000.0,
+      "total": 950000000.0
+    },
+    {
+      "name": "D&O Diary",
+      "count": 1,
+      "avg": 919000000.0,
+      "total": 919000000.0
+    },
+    {
+      "name": "NPR",
+      "count": 1,
+      "avg": 880000000.0,
+      "total": 880000000.0
+    },
+    {
+      "name": "Opioid Settlement Tracker",
+      "count": 1,
+      "avg": 750000000.0,
+      "total": 750000000.0
+    },
+    {
+      "name": "TopClassActions",
+      "count": 29,
+      "avg": 727505189.6551725,
+      "total": 21097650500.0
+    },
+    {
+      "name": "State AGs",
+      "count": 3,
+      "avg": 637416666.6666666,
+      "total": 1912250000.0
+    },
+    {
+      "name": "Stanford SCAC",
+      "count": 18,
+      "avg": 564611111.1111112,
+      "total": 10163000000.0
+    },
+    {
+      "name": "CFPB",
+      "count": 6,
+      "avg": 558333333.3333334,
+      "total": 3350000000.0
+    },
+    {
+      "name": "Court Records",
+      "count": 5,
+      "avg": 500240000.0,
+      "total": 2501200000.0
+    },
+    {
+      "name": "EdSource",
+      "count": 1,
+      "avg": 500000000.0,
+      "total": 500000000.0
+    },
+    {
+      "name": "TopVerdict.com",
+      "count": 97,
+      "avg": 408245914.82474226,
+      "total": 39599853738.0
+    },
+    {
+      "name": "EU Commission",
+      "count": 2,
+      "avg": 400000000.0,
+      "total": 800000000.0
+    },
+    {
+      "name": "FTC",
+      "count": 8,
+      "avg": 368825000.0,
+      "total": 2950600000.0
+    },
+    {
+      "name": "LawyersAndSettlements",
+      "count": 8,
+      "avg": 320675000.0,
+      "total": 2565400000.0
+    },
+    {
+      "name": "Simmons Firm",
+      "count": 1,
+      "avg": 314000000.0,
+      "total": 314000000.0
+    },
+    {
+      "name": "Mass Tort Settlement",
+      "count": 1,
+      "avg": 314000000.0,
+      "total": 314000000.0
+    },
+    {
+      "name": "ISS Governance",
+      "count": 13,
+      "avg": 294576923.0769231,
+      "total": 3829500000.0
+    },
+    {
+      "name": "JND Legal Administration",
+      "count": 42,
+      "avg": 281691670.11904764,
+      "total": 11831050145.0
+    },
+    {
+      "name": "IAPP",
+      "count": 3,
+      "avg": 280666666.6666667,
+      "total": 842000000.0
+    },
+    {
+      "name": "Lexology",
+      "count": 1,
+      "avg": 275000000.0,
+      "total": 275000000.0
+    },
+    {
+      "name": "FTC Enforcement",
+      "count": 2,
+      "avg": 270000000.0,
+      "total": 540000000.0
+    },
+    {
+      "name": "FindLaw",
+      "count": 1,
+      "avg": 240000000.0,
+      "total": 240000000.0
+    },
+    {
+      "name": "Legal Aid NYC",
+      "count": 1,
+      "avg": 205631253.0,
+      "total": 205631253.0
+    },
+    {
+      "name": "Kroll Settlement Administration",
+      "count": 20,
+      "avg": 194597500.0,
+      "total": 3891950000.0
+    },
+    {
+      "name": "Mass.gov",
+      "count": 1,
+      "avg": 175000000.0,
+      "total": 175000000.0
+    },
+    {
+      "name": "WTTW Chicago",
+      "count": 2,
+      "avg": 169350000.0,
+      "total": 338700000.0
+    },
+    {
+      "name": "Duane Morris",
+      "count": 6,
+      "avg": 119666666.66666667,
+      "total": 718000000.0
+    },
+    {
+      "name": "Rust Consulting",
+      "count": 3,
+      "avg": 113566666.66666667,
+      "total": 340700000.0
+    },
+    {
+      "name": "FRT Services",
+      "count": 9,
+      "avg": 103255555.55555555,
+      "total": 929300000.0
+    },
+    {
+      "name": "Moon Law Group",
+      "count": 1,
+      "avg": 98000000.0,
+      "total": 98000000.0
+    },
+    {
+      "name": "EEOC",
+      "count": 2,
+      "avg": 80500000.0,
+      "total": 161000000.0
+    },
+    {
+      "name": "Verdict",
+      "count": 4,
+      "avg": 75525000.0,
+      "total": 302100000.0
+    },
+    {
+      "name": "Weitz & Luxenberg",
+      "count": 1,
+      "avg": 65250000.0,
+      "total": 65250000.0
+    },
+    {
+      "name": "FCC",
+      "count": 4,
+      "avg": 65125000.0,
+      "total": 260500000.0
+    },
+    {
+      "name": "State Settlement",
+      "count": 1,
+      "avg": 63000000.0,
+      "total": 63000000.0
+    },
+    {
+      "name": "Sanford Heisler",
+      "count": 1,
+      "avg": 61000000.0,
+      "total": 61000000.0
+    },
+    {
+      "name": "LeadsHook",
+      "count": 21,
+      "avg": 59182380.952380955,
+      "total": 1242830000.0
+    },
+    {
+      "name": "Analytics Consulting",
+      "count": 1,
+      "avg": 55000000.0,
+      "total": 55000000.0
+    },
+    {
+      "name": "Lawsuit Info Center",
+      "count": 2,
+      "avg": 50300000.0,
+      "total": 100600000.0
+    },
+    {
+      "name": "SC Press Association",
+      "count": 1,
+      "avg": 50000000.0,
+      "total": 50000000.0
+    },
+    {
+      "name": "Gilardi & Co.",
+      "count": 1,
+      "avg": 47500000.0,
+      "total": 47500000.0
+    },
+    {
+      "name": "CFPB Enforcement",
+      "count": 3,
+      "avg": 46516666.666666664,
+      "total": 139550000.0
+    },
+    {
+      "name": "State AG Settlement",
+      "count": 11,
+      "avg": 46236363.63636363,
+      "total": 508600000.0
+    },
+    {
+      "name": "Plan Sponsor",
+      "count": 3,
+      "avg": 45833333.333333336,
+      "total": 137500000.0
+    },
+    {
+      "name": "NCTR",
+      "count": 1,
+      "avg": 41500000.0,
+      "total": 41500000.0
+    },
+    {
+      "name": "Ropes & Gray",
+      "count": 1,
+      "avg": 40000000.0,
+      "total": 40000000.0
+    },
+    {
+      "name": "King Law",
+      "count": 1,
+      "avg": 31000000.0,
+      "total": 31000000.0
+    },
+    {
+      "name": "Claim Depot",
+      "count": 14,
+      "avg": 26260714.285714287,
+      "total": 367650000.0
+    },
+    {
+      "name": "A.B. Data",
+      "count": 10,
+      "avg": 25575000.0,
+      "total": 255750000.0
+    },
+    {
+      "name": "Class Action",
+      "count": 32,
+      "avg": 25377812.5,
+      "total": 812090000.0
+    },
+    {
+      "name": "Federal Settlement",
+      "count": 2,
+      "avg": 20800000.0,
+      "total": 41600000.0
+    },
+    {
+      "name": "Sokolove Law",
+      "count": 2,
+      "avg": 17750000.0,
+      "total": 35500000.0
+    },
+    {
+      "name": "ClassAction.org",
+      "count": 13,
+      "avg": 16093846.153846154,
+      "total": 209220000.0
+    },
+    {
+      "name": "Angeion Group",
+      "count": 12,
+      "avg": 15924166.666666666,
+      "total": 191090000.0
+    },
+    {
+      "name": "HUD/DOJ",
+      "count": 1,
+      "avg": 15000000.0,
+      "total": 15000000.0
+    },
+    {
+      "name": "Prison Legal News",
+      "count": 2,
+      "avg": 14725000.0,
+      "total": 29450000.0
+    },
+    {
+      "name": "Settlement",
+      "count": 1,
+      "avg": 12000000.0,
+      "total": 12000000.0
+    },
+    {
+      "name": "Legal Sports Report",
+      "count": 1,
+      "avg": 12000000.0,
+      "total": 12000000.0
+    },
+    {
+      "name": "City Settlement",
+      "count": 2,
+      "avg": 11600000.0,
+      "total": 23200000.0
+    },
+    {
+      "name": "CBS News",
+      "count": 1,
+      "avg": 10000000.0,
+      "total": 10000000.0
+    },
+    {
+      "name": "ClaimDepot",
+      "count": 3,
+      "avg": 7933333.333333333,
+      "total": 23800000.0
+    },
+    {
+      "name": "Idaho Press",
+      "count": 1,
+      "avg": 7000000.0,
+      "total": 7000000.0
+    },
+    {
+      "name": "ELC-PA",
+      "count": 1,
+      "avg": 6000000.0,
+      "total": 6000000.0
+    },
+    {
+      "name": "BigClassAction",
+      "count": 1,
+      "avg": 3750000.0,
+      "total": 3750000.0
+    },
+    {
+      "name": "Star Tribune",
+      "count": 1,
+      "avg": 3400000.0,
+      "total": 3400000.0
+    },
+    {
+      "name": "FTC/AZ AG",
+      "count": 1,
+      "avg": 2600000.0,
+      "total": 2600000.0
+    },
+    {
+      "name": "State Enforcement",
+      "count": 1,
+      "avg": 2500000.0,
+      "total": 2500000.0
+    },
+    {
+      "name": "Cohen Milstein",
+      "count": 1,
+      "avg": 2275000.0,
+      "total": 2275000.0
+    },
+    {
+      "name": "FMC",
+      "count": 1,
+      "avg": 1975000.0,
+      "total": 1975000.0
+    },
+    {
+      "name": "NJ AG",
+      "count": 1,
+      "avg": 1640000.0,
+      "total": 1640000.0
+    },
+    {
+      "name": "CT AG",
+      "count": 1,
+      "avg": 1500000.0,
+      "total": 1500000.0
+    },
+    {
+      "name": "SEC EDGAR",
+      "count": 2,
+      "avg": 1450000.0,
+      "total": 2900000.0
+    },
+    {
+      "name": "RI AG",
+      "count": 1,
+      "avg": 1000000.0,
+      "total": 1000000.0
+    },
+    {
+      "name": "NY Governor",
+      "count": 1,
+      "avg": 514000.0,
+      "total": 514000.0
+    }
+  ]
+}

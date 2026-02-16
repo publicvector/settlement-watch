@@ -1,0 +1,1536 @@
+{
+  "generated_at": "2026-02-16T07:46:01.520054",
+  "overview": {
+    "total_cases": 921,
+    "total_value": 1473161899636.0,
+    "avg_settlement": 1691345464.564868,
+    "median_settlement": 110000000.0,
+    "unique_courts": 219,
+    "unique_defendants": 345,
+    "cause_categories": 67
+  },
+  "size_distribution": [
+    {
+      "bucket": "Billion+",
+      "count": 182,
+      "total": 1363080525124.0
+    },
+    {
+      "bucket": "$100M-$1B",
+      "count": 282,
+      "total": 97041789820.0
+    },
+    {
+      "bucket": "$10M-$100M",
+      "count": 270,
+      "total": 12410147977.0
+    },
+    {
+      "bucket": "$1M-$10M",
+      "count": 129,
+      "total": 626007215.0
+    },
+    {
+      "bucket": "Under $1M",
+      "count": 8,
+      "total": 3429500.0
+    }
+  ],
+  "causes": [
+    {
+      "name": "Tobacco Litigation",
+      "count": 5,
+      "total": 274750000000.0,
+      "avg": 54950000000.0,
+      "min": 750000000.0,
+      "max": 206000000000.0,
+      "p25": 9500000000.0,
+      "median": 12500000000.0,
+      "p75": 46000000000.0,
+      "confidence": 0.5333333333333333
+    },
+    {
+      "name": "Product Liability",
+      "count": 60,
+      "total": 247156371799.0,
+      "avg": 4119272863.3166666,
+      "min": 1750000.0,
+      "max": 206000000000.0,
+      "p25": 60687491.0,
+      "median": 187500000.0,
+      "p75": 966000000.0,
+      "confidence": 0.8999999999999999
+    },
+    {
+      "name": "Securities Fraud",
+      "count": 33,
+      "total": 143344550000.0,
+      "avg": 4343774242.424242,
+      "min": 4000000.0,
+      "max": 16650000000.0,
+      "p25": 920000000.0,
+      "median": 3200000000.0,
+      "p75": 5900000000.0,
+      "confidence": 0.8372093023255813
+    },
+    {
+      "name": "Environmental",
+      "count": 30,
+      "total": 138931272533.0,
+      "avg": 4631042417.766666,
+      "min": 1480000.0,
+      "max": 21000000000.0,
+      "p25": 450000000.0,
+      "median": 1000000000.0,
+      "p75": 10000000000.0,
+      "confidence": 0.825
+    },
+    {
+      "name": "Securities",
+      "count": 91,
+      "total": 64530220000.0,
+      "avg": 709123296.7032967,
+      "min": 3300000.0,
+      "max": 12700000000.0,
+      "p25": 19970000.0,
+      "median": 80000000.0,
+      "p75": 200000000.0,
+      "confidence": 0.9306930693069306
+    },
+    {
+      "name": "Product Liability - Pharmaceutical",
+      "count": 13,
+      "total": 59557500000.0,
+      "avg": 4581346153.846154,
+      "min": 187500000.0,
+      "max": 10900000000.0,
+      "p25": 2370000000.0,
+      "median": 4850000000.0,
+      "p75": 6000000000.0,
+      "confidence": 0.6956521739130435
+    },
+    {
+      "name": "Antitrust",
+      "count": 51,
+      "total": 51695108347.0,
+      "avg": 1013629575.4313725,
+      "min": 15000000.0,
+      "max": 6200000000.0,
+      "p25": 100000000.0,
+      "median": 325000000.0,
+      "p75": 1100000000.0,
+      "confidence": 0.8852459016393441
+    },
+    {
+      "name": "Consumer",
+      "count": 62,
+      "total": 27736582250.0,
+      "avg": 447364229.83870965,
+      "min": 514000.0,
+      "max": 14700000000.0,
+      "p25": 6000000.0,
+      "median": 27500000.0,
+      "p75": 100000000.0,
+      "confidence": 0.9027777777777777
+    },
+    {
+      "name": "Pharmaceutical",
+      "count": 12,
+      "total": 27642000000.0,
+      "avg": 2303500000.0,
+      "min": 86000000.0,
+      "max": 7400000000.0,
+      "p25": 270000000.0,
+      "median": 1536000000.0,
+      "p75": 5000000000.0,
+      "confidence": 0.6818181818181818
+    },
+    {
+      "name": "Healthcare Fraud",
+      "count": 20,
+      "total": 22968105920.0,
+      "avg": 1148405296.0,
+      "min": 18600000.0,
+      "max": 5700000000.0,
+      "p25": 98000000.0,
+      "median": 345000000.0,
+      "p75": 1500000000.0,
+      "confidence": 0.7666666666666666
+    },
+    {
+      "name": "Product Liability - Medical Device",
+      "count": 10,
+      "total": 19780000000.0,
+      "avg": 1978000000.0,
+      "min": 100000000.0,
+      "max": 8900000000.0,
+      "p25": 140000000.0,
+      "median": 1100000000.0,
+      "p75": 1600000000.0,
+      "confidence": 0.6499999999999999
+    },
+    {
+      "name": "Tax Fraud",
+      "count": 3,
+      "total": 14063000000.0,
+      "avg": 4687666666.666667,
+      "min": 263000000.0,
+      "max": 9100000000.0,
+      "p25": 263000000.0,
+      "median": 4687666666.666667,
+      "p75": 9100000000.0,
+      "confidence": 0.46153846153846156
+    },
+    {
+      "name": "FCPA",
+      "count": 12,
+      "total": 13773000000.0,
+      "avg": 1147750000.0,
+      "min": 100000000.0,
+      "max": 3900000000.0,
+      "p25": 661000000.0,
+      "median": 853000000.0,
+      "p75": 1060000000.0,
+      "confidence": 0.6818181818181818
+    },
+    {
+      "name": "Sexual Abuse",
+      "count": 21,
+      "total": 13493200000.0,
+      "avg": 642533333.3333334,
+      "min": 7000000.0,
+      "max": 4000000000.0,
+      "p25": 109000000.0,
+      "median": 320000000.0,
+      "p75": 852000000.0,
+      "confidence": 0.7741935483870968
+    },
+    {
+      "name": "Sanctions Violation",
+      "count": 3,
+      "total": 11450000000.0,
+      "avg": 3816666666.6666665,
+      "min": 1100000000.0,
+      "max": 8900000000.0,
+      "p25": 1100000000.0,
+      "median": 3816666666.6666665,
+      "p75": 8900000000.0,
+      "confidence": 0.46153846153846156
+    },
+    {
+      "name": "False Claims Act",
+      "count": 7,
+      "total": 10836400000.0,
+      "avg": 1548057142.857143,
+      "min": 27900000.0,
+      "max": 6800000000.0,
+      "p25": 115500000.0,
+      "median": 280000000.0,
+      "p75": 2900000000.0,
+      "confidence": 0.588235294117647
+    },
+    {
+      "name": "Commercial Litigation",
+      "count": 8,
+      "total": 7428833860.0,
+      "avg": 928604232.5,
+      "min": 71970000.0,
+      "max": 5557465180.0,
+      "p25": 138780000.0,
+      "median": 292500000.0,
+      "p75": 604900000.0,
+      "confidence": 0.611111111111111
+    },
+    {
+      "name": "Civil Rights",
+      "count": 27,
+      "total": 7241931253.0,
+      "avg": 268219676.03703704,
+      "min": 700000.0,
+      "max": 3400000000.0,
+      "p25": 20000000.0,
+      "median": 98600000.0,
+      "p75": 205631253.0,
+      "confidence": 0.8108108108108107
+    },
+    {
+      "name": "Bank Secrecy Act",
+      "count": 4,
+      "total": 6750000000.0,
+      "avg": 1687500000.0,
+      "min": 100000000.0,
+      "max": 4300000000.0,
+      "p25": 450000000.0,
+      "median": 1900000000.0,
+      "p75": 4300000000.0,
+      "confidence": 0.5
+    },
+    {
+      "name": "Personal Injury",
+      "count": 8,
+      "total": 5458900000.0,
+      "avg": 682362500.0,
+      "min": 5000000.0,
+      "max": 2300000000.0,
+      "p25": 160000000.0,
+      "median": 565000000.0,
+      "p75": 1200000000.0,
+      "confidence": 0.611111111111111
+    },
+    {
+      "name": "Consumer Banking Fraud",
+      "count": 3,
+      "total": 4940000000.0,
+      "avg": 1646666666.6666667,
+      "min": 540000000.0,
+      "max": 3700000000.0,
+      "p25": 540000000.0,
+      "median": 1646666666.6666667,
+      "p75": 3700000000.0,
+      "confidence": 0.46153846153846156
+    },
+    {
+      "name": "Product Liability - Auto",
+      "count": 7,
+      "total": 4867100000.0,
+      "avg": 695300000.0,
+      "min": 103000000.0,
+      "max": 1200000000.0,
+      "p25": 299100000.0,
+      "median": 760000000.0,
+      "p75": 1000000000.0,
+      "confidence": 0.588235294117647
+    },
+    {
+      "name": "BIPA",
+      "count": 12,
+      "total": 4712350000.0,
+      "avg": 392695833.3333333,
+      "min": 4500000.0,
+      "max": 1400000000.0,
+      "p25": 50000000.0,
+      "median": 100000000.0,
+      "p75": 650000000.0,
+      "confidence": 0.6818181818181818
+    },
+    {
+      "name": "Data Breach",
+      "count": 49,
+      "total": 3725930000.0,
+      "avg": 76039387.75510204,
+      "min": 1190000.0,
+      "max": 700000000.0,
+      "p25": 7500000.0,
+      "median": 30000000.0,
+      "p75": 115000000.0,
+      "confidence": 0.8813559322033897
+    },
+    {
+      "name": "Wrongful Death",
+      "count": 6,
+      "total": 2882000000.0,
+      "avg": 480333333.3333333,
+      "min": 75000000.0,
+      "max": 779000000.0,
+      "p25": 100000000.0,
+      "median": 640000000.0,
+      "p75": 738000000.0,
+      "confidence": 0.5625
+    },
+    {
+      "name": "Employment",
+      "count": 26,
+      "total": 2734023994.0,
+      "avg": 105154769.0,
+      "min": 1600000.0,
+      "max": 328000000.0,
+      "p25": 12260000.0,
+      "median": 80252412.0,
+      "p75": 196588996.0,
+      "confidence": 0.8055555555555556
+    },
+    {
+      "name": "Medical Malpractice",
+      "count": 9,
+      "total": 2721967529.0,
+      "avg": 302440836.5555556,
+      "min": 48100000.0,
+      "max": 951000000.0,
+      "p25": 75859000.0,
+      "median": 120654000.0,
+      "p75": 412005149.0,
+      "confidence": 0.631578947368421
+    },
+    {
+      "name": "Defamation",
+      "count": 7,
+      "total": 2634500000.0,
+      "avg": 376357142.85714287,
+      "min": 44400000.0,
+      "max": 1438000000.0,
+      "p25": 50000000.0,
+      "median": 83300000.0,
+      "p75": 787500000.0,
+      "confidence": 0.588235294117647
+    },
+    {
+      "name": "TCPA",
+      "count": 34,
+      "total": 1863920000.0,
+      "avg": 54821176.47058824,
+      "min": 1400000.0,
+      "max": 300000000.0,
+      "p25": 24150000.0,
+      "median": 33000000.0,
+      "p75": 47000000.0,
+      "confidence": 0.8409090909090908
+    },
+    {
+      "name": "Consumer Protection",
+      "count": 27,
+      "total": 1756790000.0,
+      "avg": 65066296.2962963,
+      "min": 250000.0,
+      "max": 700000000.0,
+      "p25": 3000000.0,
+      "median": 12500000.0,
+      "p75": 33500000.0,
+      "confidence": 0.8108108108108107
+    },
+    {
+      "name": "Premises Liability",
+      "count": 8,
+      "total": 1663450000.0,
+      "avg": 207931250.0,
+      "min": 60650000.0,
+      "max": 535000000.0,
+      "p25": 81000000.0,
+      "median": 158800000.0,
+      "p75": 330000000.0,
+      "confidence": 0.611111111111111
+    },
+    {
+      "name": "Motor Vehicle",
+      "count": 11,
+      "total": 1654255500.0,
+      "avg": 150386863.63636363,
+      "min": 72500000.0,
+      "max": 550000000.0,
+      "p25": 82709239.0,
+      "median": 100000000.0,
+      "p75": 159000000.0,
+      "confidence": 0.6666666666666666
+    },
+    {
+      "name": "Patent",
+      "count": 8,
+      "total": 1506700921.0,
+      "avg": 188337615.125,
+      "min": 35000000.0,
+      "max": 847000000.0,
+      "p25": 96307371.0,
+      "median": 115222850.0,
+      "p75": 121950000.0,
+      "confidence": 0.611111111111111
+    },
+    {
+      "name": "Employment Discrimination",
+      "count": 9,
+      "total": 939000000.0,
+      "avg": 104333333.33333333,
+      "min": 25000000.0,
+      "max": 238000000.0,
+      "p25": 32000000.0,
+      "median": 100000000.0,
+      "p75": 137000000.0,
+      "confidence": 0.631578947368421
+    },
+    {
+      "name": "Wage & Hour",
+      "count": 9,
+      "total": 813325000.0,
+      "avg": 90369444.44444445,
+      "min": 525000.0,
+      "max": 290000000.0,
+      "p25": 7500000.0,
+      "median": 31000000.0,
+      "p75": 140000000.0,
+      "confidence": 0.631578947368421
+    },
+    {
+      "name": "Fair Lending",
+      "count": 7,
+      "total": 676900000.0,
+      "avg": 96700000.0,
+      "min": 5000000.0,
+      "max": 335000000.0,
+      "p25": 18000000.0,
+      "median": 24000000.0,
+      "p75": 175000000.0,
+      "confidence": 0.588235294117647
+    },
+    {
+      "name": "Insurance Bad Faith",
+      "count": 8,
+      "total": 651510000.0,
+      "avg": 81438750.0,
+      "min": 3100000.0,
+      "max": 145260000.0,
+      "p25": 40000000.0,
+      "median": 114000000.0,
+      "p75": 145000000.0,
+      "confidence": 0.611111111111111
+    },
+    {
+      "name": "Insurance",
+      "count": 5,
+      "total": 630039240.0,
+      "avg": 126007848.0,
+      "min": 3000000.0,
+      "max": 421400000.0,
+      "p25": 5212600.0,
+      "median": 92426640.0,
+      "p75": 108000000.0,
+      "confidence": 0.5333333333333333
+    },
+    {
+      "name": "Healthcare",
+      "count": 3,
+      "total": 592000000.0,
+      "avg": 197333333.33333334,
+      "min": 50000000.0,
+      "max": 450000000.0,
+      "p25": 50000000.0,
+      "median": 197333333.33333334,
+      "p75": 450000000.0,
+      "confidence": 0.46153846153846156
+    },
+    {
+      "name": "Employment - Wage & Hour",
+      "count": 5,
+      "total": 467700000.0,
+      "avg": 93540000.0,
+      "min": 27000000.0,
+      "max": 240000000.0,
+      "p25": 39000000.0,
+      "median": 61700000.0,
+      "p75": 100000000.0,
+      "confidence": 0.5333333333333333
+    },
+    {
+      "name": "Government Contract Fraud",
+      "count": 3,
+      "total": 441000000.0,
+      "avg": 147000000.0,
+      "min": 4600000.0,
+      "max": 428000000.0,
+      "p25": 4600000.0,
+      "median": 147000000.0,
+      "p75": 428000000.0,
+      "confidence": 0.46153846153846156
+    },
+    {
+      "name": "Construction",
+      "count": 3,
+      "total": 420450000.0,
+      "avg": 140150000.0,
+      "min": 68500000.0,
+      "max": 280000000.0,
+      "p25": 68500000.0,
+      "median": 140150000.0,
+      "p75": 280000000.0,
+      "confidence": 0.46153846153846156
+    },
+    {
+      "name": "Whistleblower",
+      "count": 3,
+      "total": 414000000.0,
+      "avg": 138000000.0,
+      "min": 37000000.0,
+      "max": 279000000.0,
+      "p25": 37000000.0,
+      "median": 138000000.0,
+      "p75": 279000000.0,
+      "confidence": 0.46153846153846156
+    },
+    {
+      "name": "Energy",
+      "count": 13,
+      "total": 354012609.0,
+      "avg": 27231739.153846152,
+      "min": 4100000.0,
+      "max": 182000000.0,
+      "p25": 7500000.0,
+      "median": 11975580.0,
+      "p75": 25000000.0,
+      "confidence": 0.6956521739130435
+    },
+    {
+      "name": "Privacy",
+      "count": 5,
+      "total": 315164000.0,
+      "avg": 63032800.0,
+      "min": 2750000.0,
+      "max": 135000000.0,
+      "p25": 3100000.0,
+      "median": 79314000.0,
+      "p75": 95000000.0,
+      "confidence": 0.5333333333333333
+    },
+    {
+      "name": "Sexual Harassment",
+      "count": 4,
+      "total": 297400000.0,
+      "avg": 74350000.0,
+      "min": 4400000.0,
+      "max": 175000000.0,
+      "p25": 18000000.0,
+      "median": 100000000.0,
+      "p75": 175000000.0,
+      "confidence": 0.5
+    },
+    {
+      "name": "ERISA",
+      "count": 6,
+      "total": 259100000.0,
+      "avg": 43183333.333333336,
+      "min": 15600000.0,
+      "max": 69000000.0,
+      "p25": 20000000.0,
+      "median": 48500000.0,
+      "p75": 61000000.0,
+      "confidence": 0.5625
+    },
+    {
+      "name": "Elder Abuse",
+      "count": 4,
+      "total": 70100000.0,
+      "avg": 17525000.0,
+      "min": 4500000.0,
+      "max": 45000000.0,
+      "p25": 8600000.0,
+      "median": 12000000.0,
+      "p75": 45000000.0,
+      "confidence": 0.5
+    },
+    {
+      "name": "Elder Abuse/Neglect",
+      "count": 3,
+      "total": 65600000.0,
+      "avg": 21866666.666666668,
+      "min": 8600000.0,
+      "max": 45000000.0,
+      "p25": 8600000.0,
+      "median": 21866666.666666668,
+      "p75": 45000000.0,
+      "confidence": 0.46153846153846156
+    },
+    {
+      "name": "Fair Housing",
+      "count": 3,
+      "total": 19405000.0,
+      "avg": 6468333.333333333,
+      "min": 2130000.0,
+      "max": 15000000.0,
+      "p25": 2130000.0,
+      "median": 6468333.333333333,
+      "p75": 15000000.0,
+      "confidence": 0.46153846153846156
+    },
+    {
+      "name": "False Advertising",
+      "count": 4,
+      "total": 18475000.0,
+      "avg": 4618750.0,
+      "min": 100000.0,
+      "max": 9200000.0,
+      "p25": 2925000.0,
+      "median": 6250000.0,
+      "p75": 9200000.0,
+      "confidence": 0.5
+    }
+  ],
+  "defendants": [
+    {
+      "name": "Philip Morris",
+      "count": 1,
+      "total": 206000000000.0,
+      "avg": 206000000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "R.J. Reynolds",
+      "count": 1,
+      "total": 46000000000.0,
+      "avg": 46000000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "BP",
+      "count": 3,
+      "total": 41800000000.0,
+      "avg": 13933333333.333334,
+      "repeat_score": 45
+    },
+    {
+      "name": "Bank of America",
+      "count": 4,
+      "total": 36240000000.0,
+      "avg": 9060000000.0,
+      "repeat_score": 60
+    },
+    {
+      "name": "Volkswagen",
+      "count": 2,
+      "total": 29400000000.0,
+      "avg": 14700000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "PG&E",
+      "count": 4,
+      "total": 28565000000.0,
+      "avg": 7141250000.0,
+      "repeat_score": 60
+    },
+    {
+      "name": "Johnson & Johnson",
+      "count": 10,
+      "total": 28476350000.0,
+      "avg": 2847635000.0,
+      "repeat_score": 100
+    },
+    {
+      "name": "JPMorgan Chase",
+      "count": 3,
+      "total": 26920000000.0,
+      "avg": 8973333333.333334,
+      "repeat_score": 45
+    },
+    {
+      "name": "Major Banks",
+      "count": 1,
+      "total": 25000000000.0,
+      "avg": 25000000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "Bayer/Monsanto",
+      "count": 4,
+      "total": 23978000000.0,
+      "avg": 5994500000.0,
+      "repeat_score": 60
+    },
+    {
+      "name": "US Government",
+      "count": 1,
+      "total": 21000000000.0,
+      "avg": 21000000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "McKesson/Cardinal/AmerisourceBergen",
+      "count": 1,
+      "total": 21000000000.0,
+      "avg": 21000000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "3M",
+      "count": 3,
+      "total": 18950000000.0,
+      "avg": 6316666666.666667,
+      "repeat_score": 45
+    },
+    {
+      "name": "FTX Trading Ltd",
+      "count": 1,
+      "total": 16500000000.0,
+      "avg": 16500000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "Bernard L. Madoff",
+      "count": 1,
+      "total": 14500000000.0,
+      "avg": 14500000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "Enron",
+      "count": 2,
+      "total": 14400000000.0,
+      "avg": 7200000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Citigroup",
+      "count": 2,
+      "total": 14000000000.0,
+      "avg": 7000000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Goldman Sachs",
+      "count": 4,
+      "total": 13175000000.0,
+      "avg": 3293750000.0,
+      "repeat_score": 60
+    },
+    {
+      "name": "FTX/Alameda Research",
+      "count": 1,
+      "total": 12700000000.0,
+      "avg": 12700000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "Brown & Williamson",
+      "count": 1,
+      "total": 12500000000.0,
+      "avg": 12500000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "WorldCom",
+      "count": 2,
+      "total": 12200000000.0,
+      "avg": 6100000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Purdue Pharma",
+      "count": 2,
+      "total": 12000000000.0,
+      "avg": 6000000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Walgreens",
+      "count": 2,
+      "total": 11400000000.0,
+      "avg": 5700000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Multiple Defendants",
+      "count": 3,
+      "total": 9765250000.0,
+      "avg": 3255083333.3333335,
+      "repeat_score": 45
+    },
+    {
+      "name": "Lorillard",
+      "count": 1,
+      "total": 9500000000.0,
+      "avg": 9500000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "Johnson & Johnson Ethicon",
+      "count": 1,
+      "total": 8900000000.0,
+      "avg": 8900000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "BNP Paribas",
+      "count": 1,
+      "total": 8900000000.0,
+      "avg": 8900000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "Purdue Pharma/Sackler Family",
+      "count": 1,
+      "total": 7400000000.0,
+      "avg": 7400000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "Wells Fargo",
+      "count": 6,
+      "total": 7255000000.0,
+      "avg": 1209166666.6666667,
+      "repeat_score": 90
+    },
+    {
+      "name": "Deutsche Bank",
+      "count": 1,
+      "total": 7200000000.0,
+      "avg": 7200000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "Allergan",
+      "count": 2,
+      "total": 6770000000.0,
+      "avg": 3385000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Morgan Stanley",
+      "count": 2,
+      "total": 6400000000.0,
+      "avg": 3200000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Walmart",
+      "count": 6,
+      "total": 6283240000.0,
+      "avg": 1047206666.6666666,
+      "repeat_score": 90
+    },
+    {
+      "name": "Visa/Mastercard",
+      "count": 1,
+      "total": 6200000000.0,
+      "avg": 6200000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "Endo International",
+      "count": 1,
+      "total": 6000000000.0,
+      "avg": 6000000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "3M Company",
+      "count": 1,
+      "total": 6000000000.0,
+      "avg": 6000000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "R. Allen Stanford",
+      "count": 1,
+      "total": 5900000000.0,
+      "avg": 5900000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "Various Healthcare Providers",
+      "count": 1,
+      "total": 5700000000.0,
+      "avg": 5700000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "Multiple Healthcare Providers",
+      "count": 1,
+      "total": 5700000000.0,
+      "avg": 5700000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "Blue Cross Blue Shield",
+      "count": 2,
+      "total": 5470000000.0,
+      "avg": 2735000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Credit Suisse",
+      "count": 1,
+      "total": 5280000000.0,
+      "avg": 5280000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "GlaxoSmithKline",
+      "count": 2,
+      "total": 5200000000.0,
+      "avg": 2600000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Genesis Global",
+      "count": 2,
+      "total": 5000000000.0,
+      "avg": 2500000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "CVS Health",
+      "count": 1,
+      "total": 5000000000.0,
+      "avg": 5000000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "CVS",
+      "count": 1,
+      "total": 5000000000.0,
+      "avg": 5000000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "AOL Time Warner",
+      "count": 2,
+      "total": 5000000000.0,
+      "avg": 2500000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "Boeing",
+      "count": 4,
+      "total": 4937500000.0,
+      "avg": 1234375000.0,
+      "repeat_score": 60
+    },
+    {
+      "name": "Boy Scouts of America",
+      "count": 2,
+      "total": 4920000000.0,
+      "avg": 2460000000.0,
+      "repeat_score": 30
+    },
+    {
+      "name": "RBS",
+      "count": 1,
+      "total": 4900000000.0,
+      "avg": 4900000000.0,
+      "repeat_score": 15
+    },
+    {
+      "name": "Merck",
+      "count": 1,
+      "total": 4850000000.0,
+      "avg": 4850000000.0,
+      "repeat_score": 15
+    }
+  ],
+  "courts": [
+    {
+      "name": "Multi-State",
+      "count": 6,
+      "total": 276450000000.0,
+      "avg": 46075000000.0
+    },
+    {
+      "name": "U.S. District Court E.D. Louisiana",
+      "count": 2,
+      "total": 30000000000.0,
+      "avg": 15000000000.0
+    },
+    {
+      "name": "E.D. La.",
+      "count": 2,
+      "total": 21000000000.0,
+      "avg": 10500000000.0
+    },
+    {
+      "name": "D. Del. Bankruptcy",
+      "count": 3,
+      "total": 20660000000.0,
+      "avg": 6886666666.666667
+    },
+    {
+      "name": "S.D.N.Y. Bankruptcy",
+      "count": 6,
+      "total": 35500000000.0,
+      "avg": 5916666666.666667
+    },
+    {
+      "name": "U.S. District Court for the District of South Carolina",
+      "count": 2,
+      "total": 11485000000.0,
+      "avg": 5742500000.0
+    },
+    {
+      "name": "D.N.J. Bankruptcy",
+      "count": 2,
+      "total": 9900000000.0,
+      "avg": 4950000000.0
+    },
+    {
+      "name": "S.D. W.Va.",
+      "count": 2,
+      "total": 9700000000.0,
+      "avg": 4850000000.0
+    },
+    {
+      "name": "IRS",
+      "count": 3,
+      "total": 14063000000.0,
+      "avg": 4687666666.666667
+    },
+    {
+      "name": "N.D. Tex.",
+      "count": 4,
+      "total": 14450000000.0,
+      "avg": 3612500000.0
+    },
+    {
+      "name": "State Attorneys General",
+      "count": 6,
+      "total": 21020000000.0,
+      "avg": 3503333333.3333335
+    },
+    {
+      "name": "D.N.J.",
+      "count": 3,
+      "total": 9900000000.0,
+      "avg": 3300000000.0
+    },
+    {
+      "name": "S.D. New York",
+      "count": 4,
+      "total": 12870600000.0,
+      "avg": 3217650000.0
+    },
+    {
+      "name": "E.D.N.Y.",
+      "count": 3,
+      "total": 8630000000.0,
+      "avg": 2876666666.6666665
+    },
+    {
+      "name": "S.D. Tex.",
+      "count": 3,
+      "total": 7884000000.0,
+      "avg": 2628000000.0
+    },
+    {
+      "name": "Multistate",
+      "count": 7,
+      "total": 16412250000.0,
+      "avg": 2344607142.857143
+    },
+    {
+      "name": "DOJ",
+      "count": 36,
+      "total": 81989000000.0,
+      "avg": 2277472222.2222223
+    },
+    {
+      "name": "Los Angeles Superior Court",
+      "count": 3,
+      "total": 5932000000.0,
+      "avg": 1977333333.3333333
+    },
+    {
+      "name": "Multistate Settlement",
+      "count": 4,
+      "total": 7906000000.0,
+      "avg": 1976500000.0
+    },
+    {
+      "name": "N.D. Ala.",
+      "count": 2,
+      "total": 3341000000.0,
+      "avg": 1670500000.0
+    },
+    {
+      "name": "S.D.N.Y.",
+      "count": 8,
+      "total": 13195000000.0,
+      "avg": 1649375000.0
+    },
+    {
+      "name": "Delaware Superior Court",
+      "count": 2,
+      "total": 3087500000.0,
+      "avg": 1543750000.0
+    },
+    {
+      "name": "N.D. Cal.",
+      "count": 26,
+      "total": 34413300000.0,
+      "avg": 1323588461.5384614
+    },
+    {
+      "name": "State Courts",
+      "count": 2,
+      "total": 2450000000.0,
+      "avg": 1225000000.0
+    },
+    {
+      "name": "New York",
+      "count": 2,
+      "total": 2300000000.0,
+      "avg": 1150000000.0
+    },
+    {
+      "name": "Nevada State Court",
+      "count": 6,
+      "total": 6666000000.0,
+      "avg": 1111000000.0
+    },
+    {
+      "name": "Georgia State Court",
+      "count": 2,
+      "total": 2182709239.0,
+      "avg": 1091354619.5
+    },
+    {
+      "name": "EPA Administrative",
+      "count": 2,
+      "total": 2166000000.0,
+      "avg": 1083000000.0
+    },
+    {
+      "name": "W.D. Pa.",
+      "count": 2,
+      "total": 2100000000.0,
+      "avg": 1050000000.0
+    },
+    {
+      "name": "U.S. District Court for the Northern District of California",
+      "count": 3,
+      "total": 2995000000.0,
+      "avg": 998333333.3333334
+    }
+  ],
+  "sources": [
+    {
+      "name": "State AG Settlement",
+      "count": 26,
+      "total": 324378600000.0,
+      "avg": 12476100000.0
+    },
+    {
+      "name": "Top Class Actions",
+      "count": 24,
+      "total": 259273790000.0,
+      "avg": 10803074583.333334
+    },
+    {
+      "name": "Historical Records",
+      "count": 79,
+      "total": 216630150000.0,
+      "avg": 2742153797.468354
+    },
+    {
+      "name": "DOJ Settlement",
+      "count": 44,
+      "total": 128542000000.0,
+      "avg": 2921409090.909091
+    },
+    {
+      "name": "Bankruptcy Court",
+      "count": 12,
+      "total": 65440000000.0,
+      "avg": 5453333333.333333
+    },
+    {
+      "name": "Class Action",
+      "count": 87,
+      "total": 52769290000.0,
+      "avg": 606543563.2183908
+    },
+    {
+      "name": "MDL Settlement",
+      "count": 17,
+      "total": 46687500000.0,
+      "avg": 2746323529.4117646
+    },
+    {
+      "name": "TopVerdict.com",
+      "count": 97,
+      "total": 39599853738.0,
+      "avg": 408245914.82474226
+    },
+    {
+      "name": "Expert Institute",
+      "count": 40,
+      "total": 39520260000.0,
+      "avg": 988006500.0
+    },
+    {
+      "name": "DOJ",
+      "count": 17,
+      "total": 21630630000.0,
+      "avg": 1272390000.0
+    },
+    {
+      "name": "TopClassActions",
+      "count": 29,
+      "total": 21097650500.0,
+      "avg": 727505189.6551725
+    },
+    {
+      "name": "Federal Settlement",
+      "count": 3,
+      "total": 21041600000.0,
+      "avg": 7013866666.666667
+    },
+    {
+      "name": "Bankruptcy Trustee",
+      "count": 3,
+      "total": 19200000000.0,
+      "avg": 6400000000.0
+    },
+    {
+      "name": "Mass Tort Settlement",
+      "count": 8,
+      "total": 17703000000.0,
+      "avg": 2212875000.0
+    },
+    {
+      "name": "NY AG",
+      "count": 9,
+      "total": 16210350000.0,
+      "avg": 1801150000.0
+    },
+    {
+      "name": "EPA/DOJ Settlement",
+      "count": 1,
+      "total": 14700000000.0,
+      "avg": 14700000000.0
+    },
+    {
+      "name": "IRS",
+      "count": 3,
+      "total": 14063000000.0,
+      "avg": 4687666666.666667
+    },
+    {
+      "name": "CFTC",
+      "count": 1,
+      "total": 12700000000.0,
+      "avg": 12700000000.0
+    },
+    {
+      "name": "JND Legal Administration",
+      "count": 42,
+      "total": 11831050145.0,
+      "avg": 281691670.11904764
+    },
+    {
+      "name": "Stanford SCAC",
+      "count": 18,
+      "total": 10163000000.0,
+      "avg": 564611111.1111112
+    }
+  ],
+  "recent": [
+    {
+      "title": "West Fertilizer Explosion Settlement",
+      "amount": 160000000.0,
+      "cause": "Personal Injury",
+      "court": "W.D. Tex.",
+      "defendant": "CF Industries",
+      "source": "Class Action",
+      "date": null
+    },
+    {
+      "title": "Agent Orange Veterans Settlement",
+      "amount": 180000000.0,
+      "cause": "Product Liability",
+      "court": "E.D.N.Y.",
+      "defendant": "Chemical Companies",
+      "source": "Class Action",
+      "date": null
+    },
+    {
+      "title": "Imperial Sugar Explosion Settlement",
+      "amount": 210000000.0,
+      "cause": "Personal Injury",
+      "court": "S.D. Tex.",
+      "defendant": "Imperial Sugar",
+      "source": "Class Action",
+      "date": null
+    },
+    {
+      "title": "San Bruno Gas Explosion Settlement",
+      "amount": 565000000.0,
+      "cause": "Personal Injury",
+      "court": "N.D. Cal.",
+      "defendant": "PG&E",
+      "source": "Class Action",
+      "date": null
+    },
+    {
+      "title": "Norfolk Southern East Palestine Derailment",
+      "amount": 600000000.0,
+      "cause": "Environmental",
+      "court": "N.D. Ohio",
+      "defendant": "Norfolk Southern",
+      "source": "Class Action",
+      "date": null
+    },
+    {
+      "title": "Flint Water Crisis Settlement",
+      "amount": 626000000.0,
+      "cause": "Civil Rights",
+      "court": "E.D. Mich.",
+      "defendant": "State of Michigan",
+      "source": "Class Action",
+      "date": null
+    },
+    {
+      "title": "Deepwater Horizon Medical Claims",
+      "amount": 2300000000.0,
+      "cause": "Personal Injury",
+      "court": "E.D. La.",
+      "defendant": "BP",
+      "source": "MDL Settlement",
+      "date": null
+    },
+    {
+      "title": "Camp Lejeune Water Contamination Settlement",
+      "amount": 21000000000.0,
+      "cause": "Environmental",
+      "court": "E.D.N.C.",
+      "defendant": "US Government",
+      "source": "Federal Settlement",
+      "date": null
+    },
+    {
+      "title": "Paraquat Parkinsons Disease Settlement",
+      "amount": 187500000.0,
+      "cause": "Product Liability - Pharmaceutical",
+      "court": "S.D. Ill.",
+      "defendant": "Syngenta/Chevron",
+      "source": "MDL Settlement",
+      "date": null
+    },
+    {
+      "title": "Dicamba Crop Damage Settlement",
+      "amount": 400000000.0,
+      "cause": "Product Liability",
+      "court": "E.D. Mo.",
+      "defendant": "Bayer/BASF",
+      "source": "MDL Settlement",
+      "date": null
+    },
+    {
+      "title": "Philips CPAP Economic Damages Settlement",
+      "amount": 1000000000.0,
+      "cause": "Product Liability - Medical Device",
+      "court": "W.D. Pa.",
+      "defendant": "Philips Respironics",
+      "source": "MDL Settlement",
+      "date": null
+    },
+    {
+      "title": "Syngenta GMO Corn Settlement",
+      "amount": 1510000000.0,
+      "cause": "Product Liability",
+      "court": "D. Kan.",
+      "defendant": "Syngenta",
+      "source": "MDL Settlement",
+      "date": null
+    },
+    {
+      "title": "Juul E-Cigarette Youth Marketing Settlement",
+      "amount": 1700000000.0,
+      "cause": "Product Liability",
+      "court": "Multi-State",
+      "defendant": "Juul Labs",
+      "source": "State AG Settlement",
+      "date": null
+    },
+    {
+      "title": "Allergan Breast Implant Settlement",
+      "amount": 4400000000.0,
+      "cause": "Product Liability - Medical Device",
+      "court": "D.N.J.",
+      "defendant": "Allergan",
+      "source": "MDL Settlement",
+      "date": null
+    },
+    {
+      "title": "3M Earplug Military Veterans Settlement",
+      "amount": 6000000000.0,
+      "cause": "Product Liability",
+      "court": "N.D. Fla.",
+      "defendant": "3M Company",
+      "source": "MDL Settlement",
+      "date": null
+    },
+    {
+      "title": "Bayer Roundup/Glyphosate Settlement",
+      "amount": 10900000000.0,
+      "cause": "Product Liability - Pharmaceutical",
+      "court": "N.D. Cal.",
+      "defendant": "Bayer/Monsanto",
+      "source": "MDL Settlement",
+      "date": null
+    },
+    {
+      "title": "Coinbase SEC Settlement",
+      "amount": 50000000.0,
+      "cause": "Securities Violation",
+      "court": "SEC",
+      "defendant": "Coinbase",
+      "source": "SEC Settlement",
+      "date": null
+    },
+    {
+      "title": "BitMEX AML Settlement",
+      "amount": 100000000.0,
+      "cause": "Bank Secrecy Act",
+      "court": "CFTC",
+      "defendant": "BitMEX",
+      "source": "CFTC Settlement",
+      "date": null
+    },
+    {
+      "title": "Ripple Labs SEC Settlement",
+      "amount": 125000000.0,
+      "cause": "Securities Violation",
+      "court": "S.D.N.Y.",
+      "defendant": "Ripple Labs",
+      "source": "SEC Settlement",
+      "date": null
+    },
+    {
+      "title": "Standard Chartered Sanctions Settlement",
+      "amount": 1100000000.0,
+      "cause": "Sanctions Violation",
+      "court": "DOJ/OFAC",
+      "defendant": "Standard Chartered",
+      "source": "DOJ Settlement",
+      "date": null
+    },
+    {
+      "title": "Commerzbank Sanctions Settlement",
+      "amount": 1450000000.0,
+      "cause": "Sanctions Violation",
+      "court": "DOJ",
+      "defendant": "Commerzbank",
+      "source": "DOJ Settlement",
+      "date": null
+    },
+    {
+      "title": "HSBC Money Laundering Settlement",
+      "amount": 1900000000.0,
+      "cause": "Bank Secrecy Act",
+      "court": "DOJ",
+      "defendant": "HSBC",
+      "source": "DOJ Settlement",
+      "date": null
+    },
+    {
+      "title": "Binance AML/Sanctions Settlement",
+      "amount": 4300000000.0,
+      "cause": "Bank Secrecy Act",
+      "court": "DOJ/Treasury",
+      "defendant": "Binance",
+      "source": "DOJ Settlement",
+      "date": null
+    },
+    {
+      "title": "BNP Paribas Sanctions Settlement",
+      "amount": 8900000000.0,
+      "cause": "Sanctions Violation",
+      "court": "DOJ",
+      "defendant": "BNP Paribas",
+      "source": "DOJ Settlement",
+      "date": null
+    },
+    {
+      "title": "Och-Ziff Capital FCPA Settlement",
+      "amount": 412000000.0,
+      "cause": "FCPA",
+      "court": "DOJ/SEC",
+      "defendant": "Och-Ziff Capital",
+      "source": "DOJ Settlement",
+      "date": null
+    }
+  ]
+}

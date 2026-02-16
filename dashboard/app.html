@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settlement Watch - Full Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: rgba(255,255,255,0.03);
+            --border: rgba(255,255,255,0.08);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-red: #ef5350;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 0 30px;
+            display: flex;
+            align-items: center;
+            height: 60px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-right: 40px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 5px;
+        }
+
+        .nav-tab {
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+        .nav-tab.active { background: var(--accent-blue); color: #000; font-weight: 600; }
+
+        /* Layout */
+        .main { padding: 30px; max-width: 1800px; margin: 0 auto; }
+
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+        }
+
+        /* Grid Layouts */
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px; }
+        .grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 30px; }
+        .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px; }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+
+        /* KPI Cards */
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            transition: transform 0.2s;
+        }
+
+        .kpi-card:hover { transform: translateY(-2px); }
+
+        .kpi-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 36px;
+            font-weight: 700;
+        }
+
+        .kpi-card.blue .kpi-value { color: var(--accent-blue); }
+        .kpi-card.green .kpi-value { color: var(--accent-green); }
+        .kpi-card.orange .kpi-value { color: var(--accent-orange); }
+        .kpi-card.purple .kpi-value { color: var(--accent-purple); }
+
+        .kpi-change {
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .kpi-change.up { color: var(--accent-green); }
+        .kpi-change.down { color: var(--accent-red); }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .chart-container.tall { height: 400px; }
+        .chart-container.short { height: 200px; }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table td {
+            padding: 14px 16px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table tr:hover { background: rgba(255,255,255,0.02); }
+
+        .amount { font-family: 'SF Mono', Monaco, monospace; color: var(--accent-blue); }
+        .amount.large { color: var(--accent-green); font-weight: 600; }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge.high { background: rgba(102, 187, 106, 0.15); color: var(--accent-green); }
+        .badge.medium { background: rgba(255, 167, 38, 0.15); color: var(--accent-orange); }
+        .badge.low { background: rgba(239, 83, 80, 0.15); color: var(--accent-red); }
+
+        /* Progress Bars */
+        .progress-bar {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            height: 8px;
+            width: 100px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+            border-radius: 4px;
+        }
+
+        /* Calculator */
+        .calculator {
+            background: linear-gradient(135deg, #1e3a5f 0%, #152238 100%);
+            border: 1px solid rgba(79, 195, 247, 0.2);
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .calc-field label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .calc-field select {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 13px;
+        }
+
+        .calc-results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .calc-result {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .calc-result .label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .calc-result .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .grid-4 { grid-template-columns: repeat(2, 1fr); }
+            .grid-3 { grid-template-columns: repeat(2, 1fr); }
+            .calc-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .grid-4, .grid-3, .grid-2, .grid-1-2, .grid-2-1 {
+                grid-template-columns: 1fr;
+            }
+            .nav { padding: 0 15px; }
+            .main { padding: 20px; }
+            .nav-tabs { overflow-x: auto; }
+        }
+
+        /* Stats List */
+        .stats-list {
+            list-style: none;
+        }
+
+        .stats-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stats-list li:last-child { border-bottom: none; }
+
+        .stats-list .label { color: var(--text-secondary); }
+        .stats-list .value { font-weight: 600; color: var(--accent-blue); }
+
+        /* Search */
+        .search-box {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            width: 100%;
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .search-box::placeholder { color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-brand">Settlement Watch</div>
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="showPage('overview')">Overview</div>
+            <div class="nav-tab" onclick="showPage('causes')">Causes</div>
+            <div class="nav-tab" onclick="showPage('defendants')">Defendants</div>
+            <div class="nav-tab" onclick="showPage('courts')">Courts</div>
+            <div class="nav-tab" onclick="showPage('calculator')">Calculator</div>
+            <div class="nav-tab" onclick="showPage('recent')">Recent</div>
+        </div>
+    </nav>
+
+    <main class="main">
+        <!-- Overview Page -->
+        <div id="page-overview" class="page active">
+            <div class="page-header">
+                <h1>Analytics Overview</h1>
+                <p>Comprehensive settlement and verdict intelligence</p>
+            </div>
+
+            <div class="grid-4">
+                <div class="kpi-card blue">
+                    <div class="kpi-label">Total Cases</div>
+                    <div class="kpi-value" id="kpi-cases">-</div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-label">Total Value</div>
+                    <div class="kpi-value" id="kpi-value">-</div>
+                </div>
+                <div class="kpi-card orange">
+                    <div class="kpi-label">Median Settlement</div>
+                    <div class="kpi-value" id="kpi-median">-</div>
+                </div>
+                <div class="kpi-card purple">
+                    <div class="kpi-label">Cause Categories</div>
+                    <div class="kpi-value" id="kpi-causes">-</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">Settlement Size Distribution</div>
+                    <div class="chart-container">
+                        <canvas id="chart-size-dist"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Top Causes by Total Value</div>
+                    <div class="chart-container">
+                        <canvas id="chart-causes"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">Top 10 Defendants</div>
+                    <div class="chart-container tall">
+                        <canvas id="chart-defendants"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Settlement Sources</div>
+                    <div class="chart-container tall">
+                        <canvas id="chart-sources"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Causes Page -->
+        <div id="page-causes" class="page">
+            <div class="page-header">
+                <h1>Cause of Action Analysis</h1>
+                <p>Benchmarks and statistics by legal claim type</p>
+            </div>
+
+            <input type="text" class="search-box" placeholder="Search causes..." id="cause-search" onkeyup="filterCauses()">
+
+            <div class="card">
+                <table class="data-table" id="causes-table">
+                    <thead>
+                        <tr>
+                            <th>Cause of Action</th>
+                            <th>Cases</th>
+                            <th>Median</th>
+                            <th>P25</th>
+                            <th>P75</th>
+                            <th>Total Value</th>
+                            <th>Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody id="causes-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Defendants Page -->
+        <div id="page-defendants" class="page">
+            <div class="page-header">
+                <h1>Defendant Analysis</h1>
+                <p>Payment patterns and repeat payer identification</p>
+            </div>
+
+            <input type="text" class="search-box" placeholder="Search defendants..." id="defendant-search" onkeyup="filterDefendants()">
+
+            <div class="card">
+                <table class="data-table" id="defendants-table">
+                    <thead>
+                        <tr>
+                            <th>Defendant</th>
+                            <th>Cases</th>
+                            <th>Total Paid</th>
+                            <th>Average</th>
+                            <th>Risk Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="defendants-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Courts Page -->
+        <div id="page-courts" class="page">
+            <div class="page-header">
+                <h1>Court Analysis</h1>
+                <p>Venue performance and jurisdiction benchmarks</p>
+            </div>
+
+            <div class="card">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Court/Venue</th>
+                            <th>Cases</th>
+                            <th>Total Value</th>
+                            <th>Average</th>
+                        </tr>
+                    </thead>
+                    <tbody id="courts-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Calculator Page -->
+        <div id="page-calculator" class="page">
+            <div class="page-header">
+                <h1>Case Value Calculator</h1>
+                <p>Estimate potential settlement value based on case factors</p>
+            </div>
+
+            <div class="card calculator">
+                <div class="calc-grid">
+                    <div class="calc-field">
+                        <label>Cause of Action</label>
+                        <select id="calc-cause" onchange="calculate()">
+                            <option value="product_liability" data-m="120" data-l="50" data-h="651">Product Liability</option>
+                            <option value="securities" data-m="80" data-l="20" data-h="200">Securities</option>
+                            <option value="antitrust" data-m="275" data-l="84" data-h="630">Antitrust</option>
+                            <option value="environmental" data-m="1166" data-l="79" data-h="10000">Environmental</option>
+                            <option value="data_breach" data-m="14" data-l="6" data-h="60">Data Breach</option>
+                            <option value="consumer" data-m="27" data-l="6" data-h="100">Consumer Protection</option>
+                            <option value="employment" data-m="80" data-l="12" data-h="197">Employment</option>
+                            <option value="bipa" data-m="100" data-l="50" data-h="650">BIPA</option>
+                            <option value="tcpa" data-m="33" data-l="24" data-h="47">TCPA</option>
+                            <option value="civil_rights" data-m="99" data-l="20" data-h="160">Civil Rights</option>
+                            <option value="healthcare" data-m="150" data-l="60" data-h="949">Healthcare Fraud</option>
+                            <option value="pharmaceutical" data-m="1536" data-l="270" data-h="5000">Pharmaceutical</option>
+                        </select>
+                    </div>
+                    <div class="calc-field">
+                        <label>Jurisdiction</label>
+                        <select id="calc-jur" onchange="calculate()">
+                            <option value="1.0">National Average</option>
+                            <option value="1.25">California (+25%)</option>
+                            <option value="1.20">New York (+20%)</option>
+                            <option value="1.20">9th Circuit (+20%)</option>
+                            <option value="1.15">2nd Circuit (+15%)</option>
+                            <option value="1.10">Texas (+10%)</option>
+                            <option value="0.95">Other State (-5%)</option>
+                        </select>
+                    </div>
+                    <div class="calc-field">
+                        <label>Defendant Type</label>
+                        <select id="calc-def" onchange="calculate()">
+                            <option value="1.0">Mid-Size Company</option>
+                            <option value="1.50">Fortune 100 (+50%)</option>
+                            <option value="1.25">Fortune 500 (+25%)</option>
+                            <option value="1.10">Large Corp (+10%)</option>
+                            <option value="0.90">Government (-10%)</option>
+                            <option value="0.75">Small Company (-25%)</option>
+                        </select>
+                    </div>
+                    <div class="calc-field">
+                        <label>Class Size</label>
+                        <select id="calc-class" onchange="calculate()">
+                            <option value="1.0">Medium (10K-100K)</option>
+                            <option value="1.30">Mega (1M+) (+30%)</option>
+                            <option value="1.15">Large (100K-1M) (+15%)</option>
+                            <option value="0.85">Small (1K-10K) (-15%)</option>
+                            <option value="0.60">Individual (-40%)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="calc-results">
+                    <div class="calc-result">
+                        <div class="label">Conservative (P25)</div>
+                        <div class="value" id="calc-low">$50M</div>
+                    </div>
+                    <div class="calc-result">
+                        <div class="label">Expected (Median)</div>
+                        <div class="value" id="calc-mid">$120M</div>
+                    </div>
+                    <div class="calc-result">
+                        <div class="label">Aggressive (P75)</div>
+                        <div class="value" id="calc-high">$651M</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-top: 30px;">
+                <div class="card">
+                    <div class="card-title">Jurisdiction Multipliers</div>
+                    <ul class="stats-list">
+                        <li><span class="label">California</span><span class="value">1.25x</span></li>
+                        <li><span class="label">New York</span><span class="value">1.20x</span></li>
+                        <li><span class="label">9th Circuit</span><span class="value">1.20x</span></li>
+                        <li><span class="label">2nd Circuit</span><span class="value">1.15x</span></li>
+                        <li><span class="label">Texas</span><span class="value">1.10x</span></li>
+                        <li><span class="label">Federal (other)</span><span class="value">1.05x</span></li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-title">Defendant Type Multipliers</div>
+                    <ul class="stats-list">
+                        <li><span class="label">Fortune 100</span><span class="value">1.50x</span></li>
+                        <li><span class="label">Fortune 500</span><span class="value">1.25x</span></li>
+                        <li><span class="label">Large Corporation</span><span class="value">1.10x</span></li>
+                        <li><span class="label">Mid-Size Company</span><span class="value">1.00x</span></li>
+                        <li><span class="label">Government</span><span class="value">0.90x</span></li>
+                        <li><span class="label">Small Company</span><span class="value">0.75x</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Page -->
+        <div id="page-recent" class="page">
+            <div class="page-header">
+                <h1>Recent Settlements</h1>
+                <p>Latest additions to the database</p>
+            </div>
+
+            <div class="card">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Case</th>
+                            <th>Amount</th>
+                            <th>Cause</th>
+                            <th>Defendant</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let dashboardData = null;
+
+        // Load data
+        async function loadData() {
+            try {
+                const response = await fetch('data.json');
+                dashboardData = await response.json();
+                renderDashboard();
+            } catch (e) {
+                console.error('Error loading data:', e);
+                // Use fallback data
+                useFallbackData();
+            }
+        }
+
+        function useFallbackData() {
+            dashboardData = {
+                overview: { total_cases: 717, total_value: 752661000000, median_settlement: 78000000, cause_categories: 49 },
+                size_distribution: [
+                    { bucket: 'Billion+', count: 94 },
+                    { bucket: '$100M-$1B', count: 195 },
+                    { bucket: '$10M-$100M', count: 245 },
+                    { bucket: '$1M-$10M', count: 125 },
+                    { bucket: 'Under $1M', count: 8 }
+                ],
+                causes: [],
+                defendants: [],
+                courts: [],
+                recent: []
+            };
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            // KPIs
+            document.getElementById('kpi-cases').textContent = dashboardData.overview.total_cases.toLocaleString();
+            document.getElementById('kpi-value').textContent = formatCurrency(dashboardData.overview.total_value);
+            document.getElementById('kpi-median').textContent = formatCurrency(dashboardData.overview.median_settlement);
+            document.getElementById('kpi-causes').textContent = dashboardData.overview.cause_categories;
+
+            renderCharts();
+            renderTables();
+        }
+
+        function renderCharts() {
+            Chart.defaults.color = '#888';
+            Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+
+            // Size Distribution
+            const sizeDist = dashboardData.size_distribution;
+            new Chart(document.getElementById('chart-size-dist'), {
+                type: 'doughnut',
+                data: {
+                    labels: sizeDist.map(d => d.bucket),
+                    datasets: [{
+                        data: sizeDist.map(d => d.count),
+                        backgroundColor: ['#4fc3f7', '#66bb6a', '#ffa726', '#ab47bc', '#ef5350'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right' } }
+                }
+            });
+
+            // Causes Chart
+            const causes = dashboardData.causes.slice(0, 8);
+            new Chart(document.getElementById('chart-causes'), {
+                type: 'bar',
+                data: {
+                    labels: causes.map(c => c.name.substring(0, 15)),
+                    datasets: [{
+                        data: causes.map(c => c.total / 1e9),
+                        backgroundColor: '#4fc3f7',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Defendants Chart
+            const defendants = dashboardData.defendants.slice(0, 10);
+            new Chart(document.getElementById('chart-defendants'), {
+                type: 'bar',
+                data: {
+                    labels: defendants.map(d => d.name.substring(0, 20)),
+                    datasets: [{
+                        data: defendants.map(d => d.total / 1e9),
+                        backgroundColor: '#66bb6a',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Sources Chart
+            const sources = dashboardData.sources.slice(0, 8);
+            new Chart(document.getElementById('chart-sources'), {
+                type: 'pie',
+                data: {
+                    labels: sources.map(s => s.name.substring(0, 18)),
+                    datasets: [{
+                        data: sources.map(s => s.total / 1e9),
+                        backgroundColor: ['#4fc3f7', '#66bb6a', '#ffa726', '#ab47bc', '#ef5350', '#26c6da', '#7e57c2', '#78909c'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right', labels: { font: { size: 11 } } } }
+                }
+            });
+        }
+
+        function renderTables() {
+            // Causes table
+            const causesTbody = document.getElementById('causes-tbody');
+            causesTbody.innerHTML = dashboardData.causes.map(c => `
+                <tr data-name="${c.name.toLowerCase()}">
+                    <td>${c.name}</td>
+                    <td>${c.count}</td>
+                    <td class="amount ${c.median >= 100e6 ? 'large' : ''}">${formatCurrency(c.median)}</td>
+                    <td class="amount">${formatCurrency(c.p25)}</td>
+                    <td class="amount">${formatCurrency(c.p75)}</td>
+                    <td class="amount">${formatCurrency(c.total)}</td>
+                    <td><span class="badge ${c.confidence >= 0.8 ? 'high' : c.confidence >= 0.6 ? 'medium' : 'low'}">${Math.round(c.confidence * 100)}%</span></td>
+                </tr>
+            `).join('');
+
+            // Defendants table
+            const defTbody = document.getElementById('defendants-tbody');
+            defTbody.innerHTML = dashboardData.defendants.map(d => `
+                <tr data-name="${d.name.toLowerCase()}">
+                    <td>${d.name}</td>
+                    <td>${d.count}</td>
+                    <td class="amount large">${formatCurrency(d.total)}</td>
+                    <td class="amount">${formatCurrency(d.avg)}</td>
+                    <td><div class="progress-bar"><div class="progress-fill" style="width: ${d.repeat_score}%"></div></div></td>
+                </tr>
+            `).join('');
+
+            // Courts table
+            const courtsTbody = document.getElementById('courts-tbody');
+            courtsTbody.innerHTML = dashboardData.courts.map(c => `
+                <tr>
+                    <td>${c.name.substring(0, 60)}</td>
+                    <td>${c.count}</td>
+                    <td class="amount">${formatCurrency(c.total)}</td>
+                    <td class="amount">${formatCurrency(c.avg)}</td>
+                </tr>
+            `).join('');
+
+            // Recent table
+            const recentTbody = document.getElementById('recent-tbody');
+            recentTbody.innerHTML = dashboardData.recent.map(r => `
+                <tr>
+                    <td>${(r.title || 'Unknown').substring(0, 50)}</td>
+                    <td class="amount">${formatCurrency(r.amount)}</td>
+                    <td>${r.cause || '-'}</td>
+                    <td>${(r.defendant || '-').substring(0, 25)}</td>
+                    <td>${(r.source || '-').substring(0, 20)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function formatCurrency(amount) {
+            if (!amount) return '-';
+            if (amount >= 1e9) return '$' + (amount / 1e9).toFixed(1) + 'B';
+            if (amount >= 1e6) return '$' + (amount / 1e6).toFixed(1) + 'M';
+            if (amount >= 1e3) return '$' + (amount / 1e3).toFixed(1) + 'K';
+            return '$' + amount.toLocaleString();
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('page-' + pageId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function filterCauses() {
+            const search = document.getElementById('cause-search').value.toLowerCase();
+            document.querySelectorAll('#causes-tbody tr').forEach(row => {
+                row.style.display = row.dataset.name.includes(search) ? '' : 'none';
+            });
+        }
+
+        function filterDefendants() {
+            const search = document.getElementById('defendant-search').value.toLowerCase();
+            document.querySelectorAll('#defendants-tbody tr').forEach(row => {
+                row.style.display = row.dataset.name.includes(search) ? '' : 'none';
+            });
+        }
+
+        function calculate() {
+            const sel = document.getElementById('calc-cause');
+            const opt = sel.options[sel.selectedIndex];
+
+            const m = parseFloat(opt.dataset.m);
+            const l = parseFloat(opt.dataset.l);
+            const h = parseFloat(opt.dataset.h);
+
+            const jur = parseFloat(document.getElementById('calc-jur').value);
+            const def = parseFloat(document.getElementById('calc-def').value);
+            const cls = parseFloat(document.getElementById('calc-class').value);
+
+            const mult = jur * def * cls;
+
+            document.getElementById('calc-low').textContent = formatCurrency((l * mult) * 1e6);
+            document.getElementById('calc-mid').textContent = formatCurrency((m * mult) * 1e6);
+            document.getElementById('calc-high').textContent = formatCurrency((h * mult) * 1e6);
+        }
+
+        // Initialize
+        loadData();
+        calculate();
+    </script>
+</body>
+</html>
