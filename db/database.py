@@ -779,6 +779,68 @@ class Database:
         conn.close()
         return stats
 
+    def update_case_outcome(self, outcome_id: int, updates: Dict) -> bool:
+        """Update a case outcome with new data."""
+        conn = self._get_conn()
+        cursor = conn.cursor()
+
+        # Build update query dynamically
+        set_clauses = []
+        values = []
+        for key, value in updates.items():
+            if key not in ['id', 'created_at']:  # Don't update these
+                set_clauses.append(f"{key} = ?")
+                values.append(value)
+
+        if not set_clauses:
+            return False
+
+        set_clauses.append("updated_at = ?")
+        values.append(datetime.now().isoformat())
+        values.append(outcome_id)
+
+        try:
+            cursor.execute(f"""
+                UPDATE case_outcomes
+                SET {', '.join(set_clauses)}
+                WHERE id = ?
+            """, values)
+            conn.commit()
+            return cursor.rowcount > 0
+        finally:
+            conn.close()
+
+    def update_case_outcome_by_case_number(self, case_number: str, updates: Dict) -> bool:
+        """Update a case outcome by case number."""
+        conn = self._get_conn()
+        cursor = conn.cursor()
+
+        # Build update query dynamically
+        set_clauses = []
+        values = []
+        for key, value in updates.items():
+            if key not in ['id', 'created_at', 'case_number']:
+                set_clauses.append(f"{key} = ?")
+                values.append(value)
+
+        if not set_clauses:
+            return False
+
+        set_clauses.append("updated_at = ?")
+        values.append(datetime.now().isoformat())
+        values.append(case_number)
+
+        try:
+            cursor.execute(f"""
+                UPDATE case_outcomes
+                SET {', '.join(set_clauses)}
+                WHERE case_number = ?
+            """, values)
+            conn.commit()
+            return cursor.rowcount > 0
+        finally:
+            conn.close()
+
     # === Stats ===
 
     def get_stats(self) -> Dict:

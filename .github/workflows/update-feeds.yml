@@ -82,6 +82,12 @@ jobs:
           python scripts/scraper_case_outcomes.py --limit 20 --import-db 2>&1 | head -60
         continue-on-error: true
 
+      - name: Enrich with RECAP data
+        run: |
+          echo "=== Enriching Cases with RECAP ==="
+          python scripts/recap_client.py --enrich --update 2>&1 | head -40
+        continue-on-error: true
+
       - name: Generate RSS feeds
         run: |
           echo "=== Generating RSS Feeds ==="
