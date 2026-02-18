@@ -28,8 +28,8 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install duckduckgo-search
-          playwright install chromium
+          pip install duckduckgo-search playwright playwright-stealth
+          playwright install chromium || echo "Warning: Playwright browser install failed, state court scrapers may be limited"
 
       - name: Initialize database
         run: |
@@ -92,6 +92,14 @@ jobs:
         run: |
           echo "=== Running SEC EDGAR Scraper ==="
           python scripts/scraper_sec_edgar.py --days 30 --limit 25 --import-db 2>&1 | head -50
+        continue-on-error: true
+
+      - name: Run GovInfo scraper
+        run: |
+          echo "=== Running GovInfo Settlement Scraper ==="
+          python scripts/scraper_govinfo.py --days 30 --limit 50 --import-db 2>&1 | head -60
+        env:
+          GOVINFO_API_KEY: ${{ secrets.GOVINFO_API_KEY }}
         continue-on-error: true
 
       - name: Generate RSS feeds
