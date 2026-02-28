@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
 from fastapi import Body
 from fastapi.responses import Response, HTMLResponse, FileResponse
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 try:
     from dotenv import load_dotenv
     # Load environment variables from .env file (optional)
@@ -12,7 +12,7 @@ except Exception:
     # If python-dotenv isn't installed, continue without it
     pass
 
-from .models.db import init_db, upsert_court, upsert_courts_batch, upsert_rss_sources_batch, list_rss_sources, list_rss_items
+from .models.db import init_db, upsert_court, upsert_courts_batch, upsert_rss_sources_batch, list_rss_sources, list_rss_items, list_settlements_db, get_settlement_stats
 from .services import rss_ingest
 from .html_views import generate_html_template
 from .data.federal_courts import FEDERAL_DISTRICT_COURTS, get_rss_url
@@ -354,6 +354,16 @@ def feed_reader_view():
     """Live feed reader with auto-refresh and filtering"""
     _ensure_initialized()
     return generate_feed_reader_html()
+
+
+@app.get("/ml", response_class=HTMLResponse)
+def ml_dashboard_view():
+    """ML-powered prediction dashboard with settlement analytics"""
+    from pathlib import Path
+    dashboard_path = Path(__file__).parent.parent / "dashboard" / "index.html"
+    if dashboard_path.exists():
+        return HTMLResponse(content=dashboard_path.read_text())
+    return HTMLResponse(content="<h1>Dashboard not found</h1>", status_code=404)
 
 
 # Analytics & Search Endpoints
@@ -1290,7 +1300,7 @@ def _get_ml_predictor():
         predictor = ONNXPredictor()
         if any(predictor.is_available().values()):
             return predictor, "onnx"
-    except ImportError:
+    except Exception:
         pass
 
     # Fall back to sklearn predictor (full features, local only)
@@ -1306,7 +1316,7 @@ def _get_ml_predictor():
 @app.get("/v1/ml/status")
 def api_ml_status():
     """Check ML model availability."""
-    from ml.config import CURRENT_MODEL_DIR, MODEL_VERSION
+    from ml.config import MODEL_VERSION
 
     predictor, backend = _get_ml_predictor()
     if predictor:
@@ -1317,7 +1327,7 @@ def api_ml_status():
     return {
         "version": MODEL_VERSION,
         "backend": backend or "none",
-        "models": models
+        "models": models,
     }
 
 
@@ -1447,6 +1457,139 @@ def api_ml_duration(
         )
     except Exception as e:
         return {"error": str(e)}
+
+
+# --- Data Enrichment & Outcome Extraction ---
+
+@app.post("/v1/extract/outcome")
+def api_extract_outcome(
+    text: str = Body(..., embed=True),
+    court: str = Body(None, embed=True),
+    case_number: str = Body(None, embed=True),
+    case_type: str = Body(None, embed=True)
+):
+    """
+    Extract settlement/verdict/dismissal data from docket entry or document text using AI.
+
+    Uses Claude to parse unstructured text and return structured outcome data.
+    """
+    from .services.outcome_extractor import get_extractor
+
+    extractor = get_extractor()
+    if not extractor.is_configured():
+        # Still works with rule-based fallback
+        pass
+
+    context = {
+        'court': court,
+        'case_number': case_number,
+        'case_type': case_type
+    }
+
+    outcome = extractor.extract_from_docket_entry(text, context)
+
+    if outcome:
+        return {
+            "found": True,
+            "outcome": outcome.to_dict(),
+            "method": "ai" if extractor.is_configured() else "rules"
+        }
+    return {"found": False, "message": "No outcome detected in text"}
+
+
+@app.post("/v1/extract/batch")
+def api_extract_batch(
+    entries: List[Dict[str, Any]] = Body(...),
+    court: str = Body(None, embed=True),
+    case_number: str = Body(None, embed=True)
+):
+    """
+    Extract outcomes from multiple docket entries.
+
+    Each entry should have 'text' or 'description' field.
+    Returns all detected outcomes.
+    """
+    from .services.outcome_extractor import get_extractor
+
+    extractor = get_extractor()
+    context = {'court': court, 'case_number': case_number}
+
+    outcomes = extractor.batch_extract_from_docket(entries, context)
+
+    return {
+        "total_entries": len(entries),
+        "outcomes_found": len(outcomes),
+        "outcomes": [o.to_dict() for o in outcomes],
+        "method": "ai" if extractor.is_configured() else "rules"
+    }
+
+
+@app.get("/v1/enrich/case")
+def api_enrich_case(court: str, case_number: str, extract_outcomes: bool = True):
+    """
+    Enrich a case with data from CourtListener/RECAP.
+
+    Fetches docket, parties, attorneys, and optionally extracts outcomes from entries.
+    """
+    _ensure_initialized()
+
+    try:
+        from .services.recap_enrichment import enrich_case
+        result = enrich_case(court, case_number)
+    except Exception as e:
+        return {"status": "error", "message": f"Enrichment failed: {str(e)}"}
+
+    # Optionally extract outcomes from docket entries
+    if extract_outcomes and result.get("status") == "success":
+        try:
+            from .models.db import get_recap_entries
+            from .services.outcome_extractor import get_extractor
+
+            entries = get_recap_entries(result.get("docket_id"))
+            if entries:
+                extractor = get_extractor()
+                outcomes = extractor.batch_extract_from_docket(
+                    entries,
+                    {'court': court, 'case_number': case_number}
+                )
+                result["extracted_outcomes"] = [o.to_dict() for o in outcomes]
+        except Exception as e:
+            result["extraction_error"] = str(e)
+
+    return result
+
+
+@app.get("/v1/data/sources")
+def api_data_sources():
+    """
+    Check status of all data sources and integrations.
+    """
+    import os
+
+    # Check environment variables for configuration
+    cl_token = bool(os.getenv("COURTLISTENER_TOKEN", "").strip())
+    anthropic_key = bool(os.getenv("ANTHROPIC_API_KEY", "").strip())
+
+    return {
+        "courtlistener": {
+            "configured": cl_token,
+            "capabilities": ["docket_search", "document_fetch", "party_lookup", "recap_archive"] if cl_token else []
+        },
+        "anthropic_ai": {
+            "configured": anthropic_key,
+            "capabilities": ["outcome_extraction", "summarization", "relevance_scoring"] if anthropic_key else []
+        },
+        "sec_edgar": {
+            "configured": True,  # No auth required
+            "status": "available",
+            "capabilities": ["litigation_disclosures", "settlement_search", "10k_8k_search"]
+        },
+        "ml_models": {
+            "configured": True,
+            "backend": "onnx",
+            "capabilities": ["dismissal_prediction", "value_estimation", "duration_prediction"]
+        }
+    }
 
 
 # --- Newsletter System ---
@@ -13604,76 +13747,28 @@ def get_settlement_analytics(state: str = None):
 
 
 # ============================================================================
-# PUBLIC SETTLEMENT RSS FEED
+# PUBLIC SETTLEMENT RSS FEED (database-backed)
 # ============================================================================
 
-# Sample high-profile settlements for public feed
-_PUBLIC_SETTLEMENTS = [
-    {
-        "title": "T-Mobile Data Breach Class Action",
-        "amount": "$350 Million",
-        "url": "https://www.t-mobilesettlement.com/",
-        "description": "Settlement for 2021 data breach affecting 76 million customers",
-        "source": "Class Action",
-        "date": "2024-01-15"
-    },
-    {
-        "title": "Equifax Data Breach Settlement",
-        "amount": "$425 Million",
-        "url": "https://www.equifaxbreachsettlement.com/",
-        "description": "FTC settlement for 2017 breach affecting 147 million people",
-        "source": "FTC",
-        "date": "2023-12-01"
-    },
-    {
-        "title": "Facebook Privacy Settlement",
-        "amount": "$725 Million",
-        "url": "https://www.facebookuserprivacysettlement.com/",
-        "description": "Cambridge Analytica data sharing settlement",
-        "source": "Class Action",
-        "date": "2023-09-22"
-    },
-    {
-        "title": "Google Location Tracking Settlement",
-        "amount": "$392 Million",
-        "url": "https://www.googlelocationhistorysettlement.com/",
-        "description": "Settlement with 40 states over location tracking",
-        "source": "State AG",
-        "date": "2023-11-14"
-    },
-    {
-        "title": "Wells Fargo Fake Accounts",
-        "amount": "$3.7 Billion",
-        "url": "https://www.wellsfargosettlement.com/",
-        "description": "CFPB settlement for fake accounts scandal",
-        "source": "CFPB",
-        "date": "2022-12-20"
-    },
-    {
-        "title": "Johnson & Johnson Talc Settlement",
-        "amount": "$8.9 Billion",
-        "url": "https://www.jjtalcsettlement.com/",
-        "description": "Settlement for talc-related cancer claims",
-        "source": "Class Action",
-        "date": "2024-05-01"
-    },
-    {
-        "title": "3M Earplug Settlement",
-        "amount": "$6 Billion",
-        "url": "https://www.3mearplugsettlement.com/",
-        "description": "Military earplug defect settlement",
-        "source": "MDL",
-        "date": "2023-08-29"
-    },
-    {
-        "title": "Juul E-Cigarette Settlement",
-        "amount": "$1.2 Billion",
-        "url": "https://www.juulsettlement.com/",
-        "description": "Settlement with states over youth marketing",
-        "source": "State AG",
-        "date": "2023-04-12"
-    },
-]
+
+def _settlement_feed_items(limit: int = 100) -> list:
+    """Get settlements from DB plus any in-memory recorded ones."""
+    _ensure_initialized()
+    db_settlements = list_settlements_db(limit=limit)
+
+    # Also include any in-memory recorded settlements
+    for s in _settlements.values():
+        if not s.get("confidential"):
+            db_settlements.append({
+                "title": s.get("case_number", "Settlement"),
+                "amount": s.get("amount"),
+                "amount_formatted": f"${s.get('amount'):,.0f}" if s.get("amount") else "",
+                "url": f"/v1/state-courts/settlements/{s['id']}",
+                "description": s.get("notes", ""),
+                "source": s.get("state", "State Court"),
+                "pub_date": s.get("settlement_date"),
+            })
+    return db_settlements
 
 
 @app.get("/feed.xml", response_class=Response)
@@ -13687,23 +13782,11 @@ def settlement_rss_feed():
     from datetime import datetime, timezone
 
     now = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S +0000')
-
-    # Combine public settlements with any recorded ones
-    all_settlements = list(_PUBLIC_SETTLEMENTS)
-    for s in _settlements.values():
-        if not s.get("confidential"):
-            all_settlements.append({
-                "title": s.get("case_number", "Settlement"),
-                "amount": f"${s.get('amount'):,.0f}" if s.get("amount") else "",
-                "url": f"/v1/state-courts/settlements/{s['id']}",
-                "description": s.get("notes", ""),
-                "source": s.get("state", "State Court"),
-                "date": s.get("settlement_date", now)
-            })
+    all_settlements = _settlement_feed_items()
 
     items = []
     for s in all_settlements[:100]:
-        amount = s.get('amount', '')
+        amount = s.get('amount_formatted') or ''
         title = f"[{amount}] {s['title']}" if amount else s['title']
         items.append(f"""
     <item>
@@ -13713,8 +13796,8 @@ def settlement_rss_feed():
 
 Amount: {amount}
 Source: {s.get('source', 'Unknown')}]]></description>
-      <pubDate>{s.get('date', now)}</pubDate>
-      <guid isPermaLink="false">{s.get('url', '')}</guid>
+      <pubDate>{s.get('pub_date', now)}</pubDate>
+      <guid isPermaLink="false">{s.get('guid') or s.get('url', '')}</guid>
     </item>""")
 
     rss = f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -13740,28 +13823,17 @@ def settlement_atom_feed():
     from datetime import datetime, timezone
 
     now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-
-    all_settlements = list(_PUBLIC_SETTLEMENTS)
-    for s in _settlements.values():
-        if not s.get("confidential"):
-            all_settlements.append({
-                "title": s.get("case_number", "Settlement"),
-                "amount": f"${s.get('amount'):,.0f}" if s.get("amount") else "",
-                "url": f"/v1/state-courts/settlements/{s['id']}",
-                "description": s.get("notes", ""),
-                "source": s.get("state", "State Court"),
-                "date": s.get("settlement_date", now)
-            })
+    all_settlements = _settlement_feed_items()
 
     entries = []
     for s in all_settlements[:100]:
-        amount = s.get('amount', '')
+        amount = s.get('amount_formatted') or ''
         title = f"[{amount}] {s['title']}" if amount else s['title']
         entries.append(f"""
   <entry>
     <title><![CDATA[{title}]]></title>
     <link href="{s.get('url', '')}"/>
-    <id>{s.get('url', '')}</id>
+    <id>{s.get('guid') or s.get('url', '')}</id>
     <updated>{now}</updated>
     <summary><![CDATA[{s.get('description', '')}
 
@@ -13788,22 +13860,53 @@ def public_settlements_api():
     """JSON API for public settlement data."""
     from datetime import datetime, timezone
 
-    all_settlements = list(_PUBLIC_SETTLEMENTS)
-    for s in _settlements.values():
-        if not s.get("confidential"):
-            all_settlements.append({
-                "title": s.get("case_number", "Settlement"),
-                "amount": s.get("amount"),
-                "description": s.get("notes", ""),
-                "source": s.get("state", "State Court"),
-                "date": s.get("settlement_date")
-            })
-
+    all_settlements = _settlement_feed_items()
     return {
         "count": len(all_settlements),
         "updated": datetime.now(timezone.utc).isoformat(),
         "settlements": all_settlements
     }
+
+
+@app.get("/v1/settlements")
+def api_settlements(
+    category: Optional[str] = None,
+    source: Optional[str] = None,
+    min_amount: Optional[float] = None,
+    q: Optional[str] = None,
+    limit: int = 100,
+):
+    """List settlements with optional filtering."""
+    _ensure_initialized()
+    settlements = list_settlements_db(
+        category=category, source=source, min_amount=min_amount, q=q, limit=limit
+    )
+    return {"count": len(settlements), "settlements": settlements}
+
+
+@app.get("/v1/settlements/stats")
+def api_settlement_stats():
+    """Summary counts by category and source."""
+    _ensure_initialized()
+    return get_settlement_stats()
+
+
+@app.post("/v1/settlements/refresh")
+def api_settlement_refresh(background_tasks: BackgroundTasks):
+    """Trigger a background settlement scrape + dork + feed cycle."""
+    _ensure_initialized()
+    from .services.settlement_scraper import refresh_all
+    background_tasks.add_task(refresh_all)
+    return {"status": "started", "message": "Settlement refresh running in background"}
+
+
+@app.post("/v1/settlements/refresh-feeds")
+def api_settlement_refresh_feeds(background_tasks: BackgroundTasks):
+    """Lightweight RSS-only settlement feed polling (no scraping or dorking)."""
+    _ensure_initialized()
+    from .services.settlement_feeds import run_feeds_and_store
+    background_tasks.add_task(run_feeds_and_store)
+    return {"status": "started", "message": "Settlement feed refresh running in background"}
 
 
 # ============================================================================
