@@ -78,6 +78,177 @@ def extract_amount(text: str) -> Tuple[Optional[float], Optional[str]]:
     return None, None
 
 
+# ---------------------------------------------------------------------------
+# Deadline + claim URL extraction helpers
+# ---------------------------------------------------------------------------
+
+DEADLINE_PATTERNS = [
+    r'(?:deadline|expires?|due|must be (?:postmarked|submitted|received) by)[:\s]+([A-Z][a-z]+ \d{1,2},?\s*\d{4})',
+    r'(?:deadline|expires?|due)[:\s]+(\d{1,2}/\d{1,2}/\d{4})',
+    r'(\d{1,2}/\d{1,2}/\d{4})',
+    r'([A-Z][a-z]+ \d{1,2},?\s*\d{4})',
+]
+
+DATE_FORMATS = [
+    "%B %d, %Y",   # January 15, 2026
+    "%B %d %Y",    # January 15 2026
+    "%b %d, %Y",   # Jan 15, 2026
+    "%b %d %Y",    # Jan 15 2026
+    "%m/%d/%Y",    # 01/15/2026
+]
+
+
+def extract_deadline(text: str) -> Optional[str]:
+    """Extract claim deadline from text and normalize to YYYY-MM-DD."""
+    if not text:
+        return None
+    for pattern in DEADLINE_PATTERNS:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            raw = match.group(1).strip()
+            for fmt in DATE_FORMATS:
+                try:
+                    dt = datetime.strptime(raw, fmt)
+                    return dt.strftime("%Y-%m-%d")
+                except ValueError:
+                    continue
+            return None  # matched text but couldn't parse date
+    return None
+
+
+CLAIM_LINK_TEXT = re.compile(
+    r'file\s+(?:a\s+|your\s+)?claim|submit\s+(?:a\s+|your\s+)?claim|claim\s+form|'
+    r'start\s+(?:your\s+)?claim|make\s+a\s+claim|begin\s+(?:your\s+)?claim',
+    re.IGNORECASE,
+)
+
+# URL paths that indicate an actual claim form page (not just a homepage)
+CLAIM_PATH_PATTERN = re.compile(
+    r'/claim|/file[-_]?claim|/submit[-_]?claim|/claimform|/fileclaim|'
+    r'/registration|/enroll|/sign[-_]?up.*claim',
+    re.IGNORECASE,
+)
+
+# Domains that are ads/referrals, not real claim forms
+SPAM_DOMAINS = re.compile(
+    r'injuryclaims\.com|lawsuit\.com|lawsuitlegal|classactionlawyer|'
+    r'findlaw\.com|avvo\.com|justia\.com',
+    re.IGNORECASE,
+)
+
+
+def _is_real_claim_url(href: str) -> bool:
+    """Check if a URL looks like an actual claim filing page, not a homepage or ad."""
+    if not href or href == '#':
+        return False
+    if SPAM_DOMAINS.search(href):
+        return False
+    # Must have a path beyond just the domain root
+    from urllib.parse import urlparse
+    parsed = urlparse(href)
+    path = parsed.path.rstrip('/')
+    # Accept if path contains claim-related keywords
+    if CLAIM_PATH_PATTERN.search(path):
+        return True
+    # Accept if it has query params suggesting a claim flow (e.g. ?step=1, ?page=claim)
+    if parsed.query and re.search(r'claim|file|submit|step', parsed.query, re.IGNORECASE):
+        return True
+    return False
+
+
+def extract_claim_url(soup: BeautifulSoup, base_url: str) -> Optional[str]:
+    """Scan <a> tags for real claim-filing links. Returns only URLs that look like
+    actual claim submission pages, not settlement homepages or ads."""
+    from urllib.parse import urljoin
+
+    # First pass: links with explicit claim-filing text AND a real claim path
+    for a in soup.find_all('a', href=True):
+        link_text = a.get_text(strip=True)
+        if CLAIM_LINK_TEXT.search(link_text):
+            href = a['href']
+            if not href.startswith('http'):
+                href = urljoin(base_url, href)
+            if href.rstrip('/') == base_url.rstrip('/'):
+                continue
+            if _is_real_claim_url(href):
+                return href
+
+    return None
+
+
+def _enrich_with_detail_page(session: requests.Session, settlements: List[Dict]) -> List[Dict]:
+    """Fetch each settlement's URL to extract claim_url and claim_deadline.
+
+    Two-hop enrichment: if the first page doesn't have a claim form link but links
+    to a settlement-specific website, follows that site and looks for the form there.
+    """
+    for s in settlements:
+        url = s.get("url")
+        if not url:
+            continue
+        try:
+            soup = _get(session, url, timeout=15)
+            if not soup:
+                continue
+            page_text = soup.get_text(' ', strip=True)
+
+            # Extract deadline from the page
+            if not s.get("claim_deadline"):
+                s["claim_deadline"] = extract_deadline(page_text)
+
+            # Try to find claim URL on this page
+            if not s.get("claim_url"):
+                claim = extract_claim_url(soup, url)
+                if claim:
+                    s["claim_url"] = claim
+                else:
+                    # Second hop: if page links to a settlement-specific site,
+                    # follow it and look for the claim form there
+                    _try_second_hop(session, s, soup, url)
+        except Exception as e:
+            logger.debug("Enrichment failed for %s: %s", url, e)
+        time.sleep(0.3)
+    return settlements
+
+
+def _try_second_hop(session: requests.Session, settlement: Dict, soup: BeautifulSoup, source_url: str):
+    """Follow outbound links to settlement-specific sites and look for claim forms."""
+    from urllib.parse import urlparse, urljoin
+
+    source_domain = urlparse(source_url).netloc
+
+    # Look for outbound links to settlement-specific domains
+    for a in soup.find_all('a', href=True):
+        href = a['href']
+        if not href.startswith('http'):
+            href = urljoin(source_url, href)
+        parsed = urlparse(href)
+        # Skip same-domain links, empty, anchors
+        if not parsed.netloc or parsed.netloc == source_domain:
+            continue
+        if SPAM_DOMAINS.search(href):
+            continue
+        # Settlement admin sites or settlement-specific domains are good candidates
+        domain = parsed.netloc.lower()
+        if any(kw in domain for kw in ['settlement', 'claim', 'classaction', 'epiq', 'simpluris',
+                                        'angeion', 'kccllc', 'rustconsulting', 'jndla']):
+            try:
+                time.sleep(0.3)
+                hop_soup = _get(session, href, timeout=15)
+                if not hop_soup:
+                    continue
+                claim = extract_claim_url(hop_soup, href)
+                if claim:
+                    settlement["claim_url"] = claim
+                    # Also grab deadline from this page if we don't have one
+                    if not settlement.get("claim_deadline"):
+                        settlement["claim_deadline"] = extract_deadline(hop_soup.get_text(' ', strip=True))
+                    return
+            except Exception:
+                continue
+    return
+
+
 def _get(session: requests.Session, url: str, timeout: int = 20) -> Optional[BeautifulSoup]:
     """Fetch and parse a URL."""
     try:
@@ -667,17 +838,25 @@ def run_dorker(categories: Optional[List[str]] = None, max_per_query: int = 5) -
 # ---------------------------------------------------------------------------
 
 def run_scrape() -> List[Dict]:
-    """Run all web scrapers and return settlement dicts."""
+    """Run all web scrapers and return settlement dicts.
+
+    Aggregator scrapers (OCA, CAR, BCA) get enriched via detail page fetches
+    to extract claim_url and claim_deadline. JND already provides claim_url.
+    Government scrapers (FTC, DOJ, etc.) are left as-is.
+    """
     session = _make_session()
     all_settlements: List[Dict] = []
 
-    scrapers = [
-        # Claim signup aggregators (highest value)
+    # Aggregator scrapers — will be enriched with detail page data
+    enrichable_scrapers = [
         ("OpenClassActions", _scrape_openclassactions),
         ("ClassActionRebates", _scrape_classactionrebates),
         ("BigClassAction", _scrape_bigclassaction),
         ("JND Legal", _scrape_jnd),
-        # Existing scrapers
+    ]
+
+    # Direct scrapers — gov scrapers have no claim portals
+    direct_scrapers = [
         ("ClassAction.org", _scrape_classaction_org),
         ("FTC", _scrape_ftc),
         ("SEC", _scrape_sec),
@@ -689,7 +868,19 @@ def run_scrape() -> List[Dict]:
         ("KCC", _scrape_kcc),
     ]
 
-    for name, fn in scrapers:
+    # Run enrichable scrapers and fetch detail pages for claim data
+    for name, fn in enrichable_scrapers:
+        try:
+            results = fn(session)
+            logger.info("Scraper %s found %d settlements, enriching...", name, len(results))
+            results = _enrich_with_detail_page(session, results)
+            all_settlements.extend(results)
+        except Exception as e:
+            logger.warning("Scraper %s failed: %s", name, e)
+        time.sleep(0.5)
+
+    # Run direct scrapers as-is
+    for name, fn in direct_scrapers:
         try:
             results = fn(session)
             all_settlements.extend(results)

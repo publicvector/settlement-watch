@@ -658,6 +658,28 @@ create index if not exists idx_doc_queue_status on doc_download_queue(status);
 create index if not exists idx_doc_queue_priority on doc_download_queue(priority desc);
 create index if not exists idx_doc_queue_court on doc_download_queue(court_code);
 
+-- Settlements (scraped/dorked settlement data)
+create table if not exists settlements (
+  id integer primary key autoincrement,
+  title text not null,
+  amount real,
+  amount_formatted text,
+  url text,
+  description text,
+  category text,
+  source text,
+  pub_date text,
+  claim_url text,
+  claim_deadline text,
+  guid text unique,
+  created_at timestamp default current_timestamp,
+  updated_at timestamp default current_timestamp
+);
+create index if not exists idx_settlements_category on settlements(category);
+create index if not exists idx_settlements_pub_date on settlements(pub_date);
+create index if not exists idx_settlements_source on settlements(source);
+create index if not exists idx_settlements_amount on settlements(amount);
+
 -- OCR columns for state_court_documents (added via ALTER TABLE if not exists)
 -- Note: SQLite doesn't support IF NOT EXISTS for ALTER TABLE, so we handle this in init_db
 """
@@ -701,7 +723,51 @@ def init_db():
                     conn.execute("ALTER TABLE state_court_documents ADD COLUMN ocr_method text")
             except Exception:
                 pass  # Table may not exist yet
+
+            # Migration: add claim_url and claim_deadline to settlements
+            try:
+                cur = conn.execute("PRAGMA table_info(settlements)")
+                cols = {r[1] for r in cur.fetchall()}
+                if "claim_url" not in cols:
+                    conn.execute("ALTER TABLE settlements ADD COLUMN claim_url text")
+                if "claim_deadline" not in cols:
+                    conn.execute("ALTER TABLE settlements ADD COLUMN claim_deadline text")
+            except Exception:
+                pass  # Table may not exist yet
+
+            # Seed settlements from settlement_watch.db if table is empty
+            try:
+                cur = conn.execute("SELECT COUNT(*) as cnt FROM settlements")
+                row = cur.fetchone()
+                count = dict(row).get("cnt", 0) if row else 0
+                if count == 0:
+                    _seed_settlements(conn)
+            except Exception:
+                pass
     return conn
+
+
+def _seed_settlements(conn):
+    """Seed settlements from settlement_watch.db if available."""
+    seed_db = Path(__file__).resolve().parent.parent.parent / "db" / "settlement_watch.db"
+    if not seed_db.exists():
+        return
+    try:
+        src = sqlite3.connect(seed_db)
+        src.row_factory = sqlite3.Row
+        rows = src.execute(
+            "SELECT title, amount, amount_formatted, url, description, category, source, pub_date, guid FROM settlements"
+        ).fetchall()
+        for r in rows:
+            conn.execute(
+                "INSERT INTO settlements(title, amount, amount_formatted, url, description, category, source, pub_date, guid) "
+                "VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(guid) DO NOTHING",
+                (r["title"], r["amount"], r["amount_formatted"], r["url"],
+                 r["description"], r["category"], r["source"], r["pub_date"], r["guid"]),
+            )
+        src.close()
+    except Exception:
+        pass
 
 def upsert_court(code: str, name: str, url: str):
     conn = get_conn()
@@ -879,6 +945,126 @@ def list_rss_items(
         tuple(params)
     )
     return [dict(r) for r in cur.fetchall()]
+
+
+# --- Settlement helpers ---
+
+def upsert_settlement(settlement: Dict[str, Any]):
+    """Insert or update a settlement record."""
+    conn = get_conn()
+    guid = settlement.get("guid")
+    if not guid:
+        # Generate guid from title + amount
+        title = settlement.get("title", "")[:30]
+        amount = settlement.get("amount", "")
+        source = settlement.get("source", "")
+        guid = f"{source}-{title}-{amount}"
+
+    with conn:
+        conn.execute(
+            "INSERT INTO settlements(title, amount, amount_formatted, url, description, category, source, pub_date, claim_url, claim_deadline, guid) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?) "
+            "ON CONFLICT(guid) DO UPDATE SET "
+            "title=excluded.title, amount=excluded.amount, amount_formatted=excluded.amount_formatted, "
+            "url=excluded.url, description=excluded.description, category=excluded.category, "
+            "source=excluded.source, pub_date=excluded.pub_date, "
+            "claim_url=COALESCE(excluded.claim_url, settlements.claim_url), "
+            "claim_deadline=COALESCE(excluded.claim_deadline, settlements.claim_deadline), "
+            "updated_at=CURRENT_TIMESTAMP",
+            (settlement.get("title"), settlement.get("amount"), settlement.get("amount_formatted"),
+             settlement.get("url"), settlement.get("description"), settlement.get("category"),
+             settlement.get("source"), settlement.get("pub_date"),
+             settlement.get("claim_url"), settlement.get("claim_deadline"), guid),
+        )
+
+
+def upsert_settlements_batch(settlements: List[Dict[str, Any]]):
+    """Batch upsert multiple settlements."""
+    for s in settlements:
+        upsert_settlement(s)
+
+
+def list_settlements_db(
+    category: Optional[str] = None,
+    source: Optional[str] = None,
+    min_amount: Optional[float] = None,
+    q: Optional[str] = None,
+    status: Optional[str] = None,
+    limit: int = 100,
+) -> List[Dict[str, Any]]:
+    """List settlements with optional filters. Computes is_active from claim_deadline."""
+    conn = get_conn()
+    conditions = []
+    params: list = []
+
+    if category:
+        conditions.append("category = ?")
+        params.append(category)
+    if source:
+        conditions.append("source = ?")
+        params.append(source)
+    if min_amount is not None:
+        conditions.append("amount >= ?")
+        params.append(min_amount)
+    if q:
+        conditions.append("(title LIKE ? OR description LIKE ?)")
+        kw = f"%{q}%"
+        params.extend([kw, kw])
+
+    # Status filter on computed is_active
+    status_expr = """CASE
+        WHEN claim_deadline IS NOT NULL AND claim_deadline >= date('now') THEN 'active'
+        WHEN claim_deadline IS NOT NULL AND claim_deadline < date('now') THEN 'expired'
+        ELSE 'unknown'
+    END"""
+    if status in ("active", "expired", "unknown"):
+        conditions.append(f"({status_expr}) = ?")
+        params.append(status)
+
+    where = " WHERE " + " AND ".join(conditions) if conditions else ""
+    params.append(limit)
+    cur = conn.execute(
+        f"SELECT *, {status_expr} AS is_active FROM settlements{where} ORDER BY amount DESC, created_at DESC LIMIT ?",
+        tuple(params),
+    )
+    return [dict(r) for r in cur.fetchall()]
+
+
+def get_settlement_stats() -> Dict[str, Any]:
+    """Get summary stats for settlements."""
+    conn = get_conn()
+
+    total = conn.execute("SELECT COUNT(*) as cnt FROM settlements").fetchone()
+    total_count = dict(total).get("cnt", 0) if total else 0
+
+    by_category = conn.execute(
+        "SELECT category, COUNT(*) as cnt, SUM(amount) as total_amount FROM settlements WHERE category IS NOT NULL GROUP BY category ORDER BY total_amount DESC"
+    ).fetchall()
+
+    by_source = conn.execute(
+        "SELECT source, COUNT(*) as cnt FROM settlements WHERE source IS NOT NULL GROUP BY source ORDER BY cnt DESC"
+    ).fetchall()
+
+    # Status counts
+    status_rows = conn.execute(
+        """SELECT
+            SUM(CASE WHEN claim_deadline IS NOT NULL AND claim_deadline >= date('now') THEN 1 ELSE 0 END) as active,
+            SUM(CASE WHEN claim_deadline IS NOT NULL AND claim_deadline < date('now') THEN 1 ELSE 0 END) as expired,
+            SUM(CASE WHEN claim_deadline IS NULL THEN 1 ELSE 0 END) as unknown,
+            SUM(CASE WHEN claim_url IS NOT NULL THEN 1 ELSE 0 END) as with_claim_url
+        FROM settlements"""
+    ).fetchone()
+    status_dict = dict(status_rows) if status_rows else {}
+
+    return {
+        "total": total_count,
+        "active": status_dict.get("active", 0),
+        "expired": status_dict.get("expired", 0),
+        "unknown": status_dict.get("unknown", 0),
+        "with_claim_url": status_dict.get("with_claim_url", 0),
+        "by_category": [dict(r) for r in by_category],
+        "by_source": [dict(r) for r in by_source],
+    }
 
 
 # --- RECAP/CourtListener helpers ---

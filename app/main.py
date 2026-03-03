@@ -13874,12 +13874,13 @@ def api_settlements(
     source: Optional[str] = None,
     min_amount: Optional[float] = None,
     q: Optional[str] = None,
+    status: Optional[str] = None,
     limit: int = 100,
 ):
     """List settlements with optional filtering."""
     _ensure_initialized()
     settlements = list_settlements_db(
-        category=category, source=source, min_amount=min_amount, q=q, limit=limit
+        category=category, source=source, min_amount=min_amount, q=q, status=status, limit=limit
     )
     return {"count": len(settlements), "settlements": settlements}
 
@@ -13907,6 +13908,178 @@ def api_settlement_refresh_feeds(background_tasks: BackgroundTasks):
     from .services.settlement_feeds import run_feeds_and_store
     background_tasks.add_task(run_feeds_and_store)
     return {"status": "started", "message": "Settlement feed refresh running in background"}
+
+
+@app.get("/settlements", response_class=HTMLResponse)
+def settlements_dashboard_view(
+    category: Optional[str] = None,
+    source: Optional[str] = None,
+    min_amount: Optional[float] = None,
+    q: Optional[str] = None,
+    status: Optional[str] = None,
+    limit: int = 100,
+):
+    """HTML dashboard for browsing settlements."""
+    _ensure_initialized()
+    settlements = list_settlements_db(
+        category=category, source=source, min_amount=min_amount, q=q, status=status, limit=limit
+    )
+    stats = get_settlement_stats()
+
+    # Build filter options from stats
+    categories = [c["category"] for c in stats.get("by_category", []) if c.get("category")]
+    sources = [s["source"] for s in stats.get("by_source", []) if s.get("source")]
+
+    # Build table rows
+    rows_html = ""
+    for s in settlements:
+        amt = s.get("amount_formatted") or ("${:,.0f}".format(s["amount"]) if s.get("amount") else "—")
+        title = s.get("title", "")[:80]
+        url = s.get("url", "")
+        title_cell = f'<a href="{url}" target="_blank">{title}</a>' if url else title
+        # Status badge
+        is_active = s.get("is_active", "unknown")
+        if is_active == "active":
+            status_badge = '<span class="badge active">Active</span>'
+        elif is_active == "expired":
+            status_badge = '<span class="badge expired">Expired</span>'
+        else:
+            status_badge = '<span class="badge unknown">—</span>'
+        # Claim button
+        claim_url = s.get("claim_url")
+        claim_cell = f'<a href="{claim_url}" target="_blank" class="claim-btn">File Claim</a>' if claim_url else '—'
+        rows_html += f"""<tr>
+            <td>{title_cell}</td>
+            <td class="amt">{amt}</td>
+            <td>{status_badge}</td>
+            <td>{claim_cell}</td>
+            <td><span class="badge cat">{s.get("category", "—")}</span></td>
+            <td><span class="badge src">{s.get("source", "—")}</span></td>
+            <td class="date">{(s.get("pub_date") or "")[:16]}</td>
+        </tr>\n"""
+
+    # Build category filter options
+    cat_options = '<option value="">All Categories</option>'
+    for c in categories:
+        sel = ' selected' if c == category else ''
+        cat_options += f'<option value="{c}"{sel}>{c}</option>'
+
+    src_options = '<option value="">All Sources</option>'
+    for s in sources:
+        sel = ' selected' if s == source else ''
+        src_options += f'<option value="{s}"{sel}>{s}</option>'
+
+    # Status filter options
+    status_options = '<option value="">All Statuses</option>'
+    for sv, sl in [("active", "Active"), ("expired", "Expired"), ("unknown", "Unknown")]:
+        sel = ' selected' if sv == status else ''
+        status_options += f'<option value="{sv}"{sel}>{sl}</option>'
+
+    # KPI values
+    total = stats.get("total", 0)
+    active_count = stats.get("active", 0)
+    with_claim_url = stats.get("with_claim_url", 0)
+    top_cat = stats["by_category"][0] if stats.get("by_category") else {}
+    top_cat_name = top_cat.get("category", "—")
+    top_cat_amt = top_cat.get("total_amount")
+    top_cat_fmt = "${:,.0f}".format(top_cat_amt) if top_cat_amt else "—"
+    num_sources = len(sources)
+
+    q_val = q or ""
+    min_amt_val = str(int(min_amount)) if min_amount else ""
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settlement Watch</title>
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#e0e0e0;min-height:100vh}}
+.header{{background:rgba(0,0,0,.3);padding:20px 40px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;justify-content:space-between;align-items:center}}
+.header h1{{font-size:24px;color:#fff}}
+.header .nav a{{color:#888;text-decoration:none;margin-left:20px;font-size:14px}}
+.header .nav a:hover{{color:#fff}}
+.container{{max-width:1400px;margin:0 auto;padding:24px}}
+.kpi-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}}
+.kpi{{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:18px;text-align:center}}
+.kpi .val{{font-size:28px;font-weight:700;color:#4fc3f7}}
+.kpi .label{{font-size:12px;color:#888;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}}
+.filters{{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:16px;margin-bottom:24px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}}
+.filters select,.filters input{{background:#1a1a2e;color:#e0e0e0;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:8px 12px;font-size:14px}}
+.filters select:focus,.filters input:focus{{outline:none;border-color:#4fc3f7}}
+.filters button{{background:#4fc3f7;color:#111;border:none;border-radius:6px;padding:8px 18px;font-size:14px;cursor:pointer;font-weight:600}}
+.filters button:hover{{background:#81d4fa}}
+.filters .clear{{background:transparent;color:#888;border:1px solid rgba(255,255,255,.2)}}
+.filters .clear:hover{{color:#fff;border-color:#fff}}
+table{{width:100%;border-collapse:collapse;background:rgba(255,255,255,.03);border-radius:10px;overflow:hidden}}
+thead{{background:rgba(255,255,255,.08)}}
+th{{text-align:left;padding:12px 16px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#888;border-bottom:1px solid rgba(255,255,255,.1)}}
+td{{padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.05);font-size:14px}}
+tr:hover{{background:rgba(255,255,255,.04)}}
+a{{color:#4fc3f7;text-decoration:none}}
+a:hover{{text-decoration:underline}}
+.amt{{font-weight:600;color:#66bb6a;white-space:nowrap}}
+.date{{color:#888;white-space:nowrap;font-size:13px}}
+.badge{{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:500}}
+.badge.cat{{background:rgba(79,195,247,.15);color:#4fc3f7}}
+.badge.src{{background:rgba(102,187,106,.15);color:#66bb6a}}
+.badge.active{{background:rgba(102,187,106,.2);color:#66bb6a}}
+.badge.expired{{background:rgba(239,83,80,.2);color:#ef5350}}
+.badge.unknown{{background:rgba(255,255,255,.08);color:#666}}
+.claim-btn{{display:inline-block;padding:4px 12px;border-radius:6px;background:#ff9800;color:#111;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap}}
+.claim-btn:hover{{background:#ffb74d;text-decoration:none}}
+.refresh-btn{{background:#ff9800;color:#111;border:none;border-radius:6px;padding:8px 16px;font-size:13px;cursor:pointer;font-weight:600}}
+.refresh-btn:hover{{background:#ffb74d}}
+.count{{color:#888;font-size:14px;margin-bottom:12px}}
+</style>
+</head>
+<body>
+<div class="header">
+    <h1>Settlement Watch</h1>
+    <div class="nav">
+        <a href="/">Feeds</a>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/settlements" class="active">Settlements</a>
+        <a href="/ml">ML Analytics</a>
+        <a href="/feed.xml">RSS</a>
+    </div>
+</div>
+<div class="container">
+    <div class="kpi-grid">
+        <div class="kpi"><div class="val">{total}</div><div class="label">Total Settlements</div></div>
+        <div class="kpi"><div class="val" style="color:#66bb6a">{active_count}</div><div class="label">Active Claims</div></div>
+        <div class="kpi"><div class="val">{with_claim_url}</div><div class="label">With Claim URL</div></div>
+        <div class="kpi"><div class="val">{num_sources}</div><div class="label">Sources</div></div>
+        <div class="kpi"><div class="val">{top_cat_fmt}</div><div class="label">Top: {top_cat_name}</div></div>
+    </div>
+
+    <form class="filters" method="get" action="/settlements">
+        <select name="category">{cat_options}</select>
+        <select name="source">{src_options}</select>
+        <select name="status">{status_options}</select>
+        <input type="number" name="min_amount" placeholder="Min amount ($)" value="{min_amt_val}" style="width:140px">
+        <input type="text" name="q" placeholder="Search..." value="{q_val}" style="width:180px">
+        <button type="submit">Filter</button>
+        <a href="/settlements"><button type="button" class="clear">Clear</button></a>
+        <button type="button" class="refresh-btn" onclick="fetch('/v1/settlements/refresh',{{method:'POST'}}).then(()=>this.textContent='Refreshing...').catch(()=>this.textContent='Error')">Refresh Data</button>
+    </form>
+
+    <div class="count">Showing {len(settlements)} settlement{"s" if len(settlements) != 1 else ""}</div>
+
+    <table>
+    <thead><tr>
+        <th>Title</th><th>Amount</th><th>Status</th><th>Claim</th><th>Category</th><th>Source</th><th>Date</th>
+    </tr></thead>
+    <tbody>
+        {rows_html}
+    </tbody>
+    </table>
+</div>
+</body>
+</html>"""
+    return HTMLResponse(content=html)
 
 
 # ============================================================================

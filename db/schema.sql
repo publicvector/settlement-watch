@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS settlements (
     category TEXT,
     source TEXT,
     pub_date TEXT,
+    claim_url TEXT,
+    claim_deadline TEXT,
     guid TEXT UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -147,6 +149,42 @@ CREATE TABLE IF NOT EXISTS case_outcomes (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Opinion analyses: extracted causes of action, outcomes, case values
+CREATE TABLE IF NOT EXISTS opinion_analyses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source TEXT NOT NULL,              -- 'huggingface', 'govinfo', 'courtlistener'
+    source_id TEXT,                    -- HF index, package_id, or opinion_outcomes.id
+    case_name TEXT,
+    court TEXT,
+    date_filed TEXT,
+
+    -- Extracted causes of action (JSON array)
+    causes_of_action TEXT,             -- e.g. '["negligence","breach of contract","fraud"]'
+    primary_cause TEXT,                -- single most prominent cause
+
+    -- Outcome classification
+    outcome_type TEXT,                 -- 'dismissal', 'settlement', 'plaintiff_judgment',
+                                      -- 'defense_judgment', 'default_judgment', 'mixed'
+    dismissal_type TEXT,               -- 'with_prejudice', 'without_prejudice', 'partial', NULL
+    dismissed_counts TEXT,             -- JSON array of dismissed claims
+    surviving_counts TEXT,             -- JSON array of surviving claims
+
+    -- Case value assessment
+    case_value REAL,                   -- $0 for full dismissals, amount for settlements/judgments
+    case_value_formatted TEXT,
+    value_basis TEXT,                  -- 'dismissed_zero', 'settlement', 'judgment', 'estimated'
+
+    -- Key facts (JSON)
+    key_facts TEXT,                    -- JSON array of factual findings/allegations
+
+    -- Metadata
+    confidence REAL DEFAULT 0.0,       -- extraction confidence 0.0-1.0
+    extraction_method TEXT,            -- 'regex', 'claude', 'hybrid'
+    raw_excerpt TEXT,                  -- first 2000 chars of opinion for reference
+    guid TEXT UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Feed metadata
 CREATE TABLE IF NOT EXISTS feeds (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -176,3 +214,8 @@ CREATE INDEX IF NOT EXISTS idx_case_outcomes_court ON case_outcomes(court);
 CREATE INDEX IF NOT EXISTS idx_case_outcomes_settlement_date ON case_outcomes(settlement_date);
 CREATE INDEX IF NOT EXISTS idx_case_outcomes_amount ON case_outcomes(settlement_amount);
 CREATE INDEX IF NOT EXISTS idx_case_outcomes_nature ON case_outcomes(nature_of_suit);
+CREATE INDEX IF NOT EXISTS idx_opinion_analyses_source ON opinion_analyses(source);
+CREATE INDEX IF NOT EXISTS idx_opinion_analyses_outcome ON opinion_analyses(outcome_type);
+CREATE INDEX IF NOT EXISTS idx_opinion_analyses_cause ON opinion_analyses(primary_cause);
+CREATE INDEX IF NOT EXISTS idx_opinion_analyses_value ON opinion_analyses(case_value);
+CREATE INDEX IF NOT EXISTS idx_opinion_analyses_court ON opinion_analyses(court);
