@@ -680,6 +680,21 @@ create index if not exists idx_settlements_pub_date on settlements(pub_date);
 create index if not exists idx_settlements_source on settlements(source);
 create index if not exists idx_settlements_amount on settlements(amount);
 
+create table if not exists claim_profiles (
+  id integer primary key autoincrement,
+  first_name text,
+  last_name text,
+  email text,
+  phone text,
+  address text,
+  address2 text,
+  city text,
+  state text,
+  zip text,
+  created_at timestamp default current_timestamp,
+  updated_at timestamp default current_timestamp
+);
+
 -- OCR columns for state_court_documents (added via ALTER TABLE if not exists)
 -- Note: SQLite doesn't support IF NOT EXISTS for ALTER TABLE, so we handle this in init_db
 """
@@ -1065,6 +1080,41 @@ def get_settlement_stats() -> Dict[str, Any]:
         "by_category": [dict(r) for r in by_category],
         "by_source": [dict(r) for r in by_source],
     }
+
+
+# --- Claim Profile helpers ---
+
+def get_claim_profile(profile_id: int = 1) -> Optional[Dict[str, Any]]:
+    """Get a claim profile by ID (default: the single-user profile)."""
+    conn = get_conn()
+    cur = conn.execute("SELECT * FROM claim_profiles WHERE id = ?", (profile_id,))
+    row = cur.fetchone()
+    return dict(row) if row else None
+
+
+def upsert_claim_profile(data: Dict[str, Any], profile_id: int = 1) -> Dict[str, Any]:
+    """Insert or update the claim profile. Single-profile for now (id=1)."""
+    conn = get_conn()
+    existing = get_claim_profile(profile_id)
+    fields = ["first_name", "last_name", "email", "phone", "address", "address2", "city", "state", "zip"]
+    if existing:
+        sets = ", ".join([f"{f} = ?" for f in fields])
+        values = [data.get(f, existing.get(f)) for f in fields]
+        values.append(profile_id)
+        with conn:
+            conn.execute(
+                f"UPDATE claim_profiles SET {sets}, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                values,
+            )
+    else:
+        values = [data.get(f) for f in fields]
+        placeholders = ", ".join(["?"] * len(fields))
+        with conn:
+            conn.execute(
+                f"INSERT INTO claim_profiles({', '.join(fields)}) VALUES({placeholders})",
+                values,
+            )
+    return get_claim_profile(profile_id)
 
 
 # --- RECAP/CourtListener helpers ---

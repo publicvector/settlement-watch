@@ -12,7 +12,7 @@ except Exception:
     # If python-dotenv isn't installed, continue without it
     pass
 
-from .models.db import init_db, upsert_court, upsert_courts_batch, upsert_rss_sources_batch, list_rss_sources, list_rss_items, list_settlements_db, get_settlement_stats
+from .models.db import init_db, upsert_court, upsert_courts_batch, upsert_rss_sources_batch, list_rss_sources, list_rss_items, list_settlements_db, get_settlement_stats, get_claim_profile, upsert_claim_profile
 from .services import rss_ingest
 from .html_views import generate_html_template
 from .data.federal_courts import FEDERAL_DISTRICT_COURTS, get_rss_url
@@ -13910,6 +13910,78 @@ def api_settlement_refresh_feeds(background_tasks: BackgroundTasks):
     return {"status": "started", "message": "Settlement feed refresh running in background"}
 
 
+# --- Claim Profile & Form Proxy Endpoints ---
+
+class ClaimProfileBody(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    address2: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip: Optional[str] = None
+
+@app.get("/v1/profile")
+def api_get_profile():
+    """Return the saved claim profile."""
+    _ensure_initialized()
+    profile = get_claim_profile()
+    if not profile:
+        return {"profile": None}
+    return {"profile": profile}
+
+@app.post("/v1/profile")
+def api_save_profile(body: ClaimProfileBody):
+    """Save or update the claim profile."""
+    _ensure_initialized()
+    data = body.dict(exclude_none=False)
+    profile = upsert_claim_profile(data)
+    return {"profile": profile}
+
+@app.get("/v1/settlements/{settlement_id}/claim-form")
+def api_get_claim_form(settlement_id: int):
+    """Fetch, parse, and pre-fill a settlement's claim form."""
+    _ensure_initialized()
+    from .models.db import get_conn
+    conn = get_conn()
+    row = conn.execute("SELECT * FROM settlements WHERE id = ?", (settlement_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Settlement not found")
+    settlement = dict(row)
+    claim_url = settlement.get("claim_url")
+    if not claim_url:
+        raise HTTPException(status_code=400, detail="This settlement has no claim URL")
+
+    from .services.claim_form_proxy import fetch_and_parse_form, map_profile_to_fields
+    result = fetch_and_parse_form(claim_url)
+    if "error" in result:
+        return {"error": result["error"], "claim_url": claim_url, "settlement": {"id": settlement_id, "title": settlement.get("title")}}
+
+    profile = get_claim_profile()
+    if profile:
+        result["fields"] = map_profile_to_fields(result["fields"], profile)
+
+    result["settlement"] = {"id": settlement_id, "title": settlement.get("title")}
+    result["claim_url"] = claim_url
+    return result
+
+class ClaimSubmitBody(BaseModel):
+    action_url: str
+    method: str = "POST"
+    form_data: Dict[str, str]
+
+@app.post("/v1/settlements/{settlement_id}/claim-form/submit")
+def api_submit_claim_form(settlement_id: int, body: ClaimSubmitBody):
+    """Proxy form submission to the claim site."""
+    _ensure_initialized()
+    from .services.claim_form_proxy import submit_claim_form
+    result = submit_claim_form(body.action_url, body.method, body.form_data)
+    result["settlement_id"] = settlement_id
+    return result
+
+
 @app.get("/settlements", response_class=HTMLResponse)
 def settlements_dashboard_view(
     category: Optional[str] = None,
@@ -13945,9 +14017,10 @@ def settlements_dashboard_view(
             status_badge = '<span class="badge expired">Expired</span>'
         else:
             status_badge = '<span class="badge unknown">—</span>'
-        # Claim button
+        # Claim button — opens proxy modal or falls back to direct link
         claim_url = s.get("claim_url")
-        claim_cell = f'<a href="{claim_url}" target="_blank" class="claim-btn">File Claim</a>' if claim_url else '—'
+        s_id = s.get("id")
+        claim_cell = f'<button class="claim-btn" onclick="openClaimForm({s_id})">File Claim</button>' if claim_url else '—'
         rows_html += f"""<tr>
             <td>{title_cell}</td>
             <td class="amt">{amt}</td>
@@ -14028,17 +14101,44 @@ a:hover{{text-decoration:underline}}
 .badge.active{{background:rgba(102,187,106,.2);color:#66bb6a}}
 .badge.expired{{background:rgba(239,83,80,.2);color:#ef5350}}
 .badge.unknown{{background:rgba(255,255,255,.08);color:#666}}
-.claim-btn{{display:inline-block;padding:4px 12px;border-radius:6px;background:#ff9800;color:#111;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap}}
-.claim-btn:hover{{background:#ffb74d;text-decoration:none}}
 .refresh-btn{{background:#ff9800;color:#111;border:none;border-radius:6px;padding:8px 16px;font-size:13px;cursor:pointer;font-weight:600}}
 .refresh-btn:hover{{background:#ffb74d}}
 .count{{color:#888;font-size:14px;margin-bottom:12px}}
+.profile-btn{{background:transparent;color:#4fc3f7;border:1px solid #4fc3f7;border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer;font-weight:500;margin-right:8px}}
+.profile-btn:hover{{background:rgba(79,195,247,.15)}}
+.profile-btn.has-profile{{color:#66bb6a;border-color:#66bb6a}}
+.profile-btn.has-profile::before{{content:"\2713 ";font-weight:700}}
+.modal-overlay{{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:1000;justify-content:center;align-items:center}}
+.modal-overlay.open{{display:flex}}
+.modal{{background:#1e293b;border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:28px;width:90%;max-width:600px;max-height:85vh;overflow-y:auto;position:relative}}
+.modal h2{{font-size:18px;margin-bottom:16px;color:#fff}}
+.modal .close-btn{{position:absolute;top:12px;right:16px;background:none;border:none;color:#888;font-size:22px;cursor:pointer}}
+.modal .close-btn:hover{{color:#fff}}
+.modal label{{display:block;font-size:13px;color:#aaa;margin-bottom:4px;margin-top:12px}}
+.modal input,.modal select,.modal textarea{{width:100%;background:#111827;color:#e0e0e0;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:8px 12px;font-size:14px}}
+.modal input:focus,.modal select:focus,.modal textarea:focus{{outline:none;border-color:#4fc3f7}}
+.modal .form-row{{display:grid;grid-template-columns:1fr 1fr;gap:12px}}
+.modal .form-row-3{{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px}}
+.modal .btn-primary{{background:#4fc3f7;color:#111;border:none;border-radius:6px;padding:10px 24px;font-size:14px;cursor:pointer;font-weight:600;margin-top:18px}}
+.modal .btn-primary:hover{{background:#81d4fa}}
+.modal .btn-submit{{background:#ff9800}}
+.modal .btn-submit:hover{{background:#ffb74d}}
+.modal .msg{{padding:10px;border-radius:6px;margin-top:12px;font-size:14px}}
+.modal .msg.ok{{background:rgba(102,187,106,.2);color:#66bb6a}}
+.modal .msg.err{{background:rgba(239,83,80,.2);color:#ef5350}}
+.auto-filled{{border-color:rgba(102,187,106,.4) !important;background:#111827 !important}}
+.field-tag{{display:inline-block;font-size:10px;color:#66bb6a;margin-left:6px;text-transform:uppercase}}
+.claim-btn{{display:inline-block;padding:4px 12px;border-radius:6px;background:#ff9800;color:#111;font-size:12px;font-weight:600;border:none;cursor:pointer;white-space:nowrap}}
+.claim-btn:hover{{background:#ffb74d}}
+.loading{{text-align:center;padding:40px;color:#888}}
+.fallback-link{{display:inline-block;margin-top:12px;color:#4fc3f7}}
 </style>
 </head>
 <body>
 <div class="header">
     <h1>Settlement Watch</h1>
     <div class="nav">
+        <button id="profileBtn" class="profile-btn" onclick="openProfileModal()">My Profile</button>
         <a href="/">Feeds</a>
         <a href="/dashboard">Dashboard</a>
         <a href="/settlements" class="active">Settlements</a>
@@ -14077,6 +14177,209 @@ a:hover{{text-decoration:underline}}
     </tbody>
     </table>
 </div>
+
+<!-- Profile Modal -->
+<div class="modal-overlay" id="profileModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('profileModal')">&times;</button>
+    <h2>Claim Profile</h2>
+    <p style="font-size:13px;color:#888;margin-bottom:8px">Enter your info once — it auto-fills claim forms.</p>
+    <div class="form-row">
+      <div><label>First Name</label><input id="pf_first_name" placeholder="Jane"></div>
+      <div><label>Last Name</label><input id="pf_last_name" placeholder="Doe"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Email</label><input id="pf_email" type="email" placeholder="jane@example.com"></div>
+      <div><label>Phone</label><input id="pf_phone" type="tel" placeholder="(555) 123-4567"></div>
+    </div>
+    <label>Address</label><input id="pf_address" placeholder="123 Main St">
+    <label>Address Line 2</label><input id="pf_address2" placeholder="Apt 4B">
+    <div class="form-row-3">
+      <div><label>City</label><input id="pf_city" placeholder="New York"></div>
+      <div><label>State</label><input id="pf_state" placeholder="NY"></div>
+      <div><label>Zip</label><input id="pf_zip" placeholder="10001"></div>
+    </div>
+    <div id="profileMsg"></div>
+    <button class="btn-primary" onclick="saveProfile()">Save Profile</button>
+  </div>
+</div>
+
+<!-- Claim Form Modal -->
+<div class="modal-overlay" id="claimModal">
+  <div class="modal" style="max-width:700px">
+    <button class="close-btn" onclick="closeModal('claimModal')">&times;</button>
+    <h2 id="claimModalTitle">File Claim</h2>
+    <div id="claimFormContainer">
+      <div class="loading">Loading claim form...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- Modal helpers ---
+function closeModal(id) {{ document.getElementById(id).classList.remove('open'); }}
+function openModal(id) {{ document.getElementById(id).classList.add('open'); }}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {{
+  el.addEventListener('click', e => {{ if (e.target === el) el.classList.remove('open'); }});
+}});
+
+// --- Profile ---
+const PF_FIELDS = ['first_name','last_name','email','phone','address','address2','city','state','zip'];
+
+async function loadProfile() {{
+  try {{
+    const r = await fetch('/v1/profile');
+    const d = await r.json();
+    if (d.profile) {{
+      PF_FIELDS.forEach(f => {{
+        const el = document.getElementById('pf_' + f);
+        if (el && d.profile[f]) el.value = d.profile[f];
+      }});
+      document.getElementById('profileBtn').classList.add('has-profile');
+    }}
+  }} catch(e) {{ /* ignore */ }}
+}}
+
+function openProfileModal() {{
+  openModal('profileModal');
+}}
+
+async function saveProfile() {{
+  const data = {{}};
+  PF_FIELDS.forEach(f => {{ data[f] = document.getElementById('pf_' + f).value; }});
+  try {{
+    const r = await fetch('/v1/profile', {{
+      method: 'POST',
+      headers: {{'Content-Type':'application/json'}},
+      body: JSON.stringify(data)
+    }});
+    const d = await r.json();
+    const msg = document.getElementById('profileMsg');
+    if (d.profile) {{
+      msg.className = 'msg ok';
+      msg.textContent = 'Profile saved!';
+      document.getElementById('profileBtn').classList.add('has-profile');
+    }} else {{
+      msg.className = 'msg err';
+      msg.textContent = 'Failed to save.';
+    }}
+    setTimeout(() => {{ msg.textContent = ''; msg.className = ''; }}, 3000);
+  }} catch(e) {{
+    const msg = document.getElementById('profileMsg');
+    msg.className = 'msg err';
+    msg.textContent = 'Error: ' + e.message;
+  }}
+}}
+
+// --- Claim Form ---
+async function openClaimForm(settlementId) {{
+  openModal('claimModal');
+  const container = document.getElementById('claimFormContainer');
+  container.innerHTML = '<div class="loading">Loading claim form...</div>';
+  document.getElementById('claimModalTitle').textContent = 'File Claim';
+
+  try {{
+    const r = await fetch('/v1/settlements/' + settlementId + '/claim-form');
+    const d = await r.json();
+
+    if (d.error) {{
+      container.innerHTML = '<div class="msg err">' + d.error + '</div>'
+        + (d.claim_url ? '<a class="fallback-link" href="' + d.claim_url + '" target="_blank">Open claim form directly &rarr;</a>' : '');
+      return;
+    }}
+
+    if (d.settlement && d.settlement.title) {{
+      document.getElementById('claimModalTitle').textContent = 'File Claim: ' + d.settlement.title;
+    }}
+
+    let html = '<form id="claimProxyForm" onsubmit="submitClaim(event,' + settlementId + ')">';
+
+    // Render visible fields
+    (d.fields || []).forEach(f => {{
+      const autoTag = f.auto_filled ? '<span class="field-tag">auto-filled</span>' : '';
+      const autoClass = f.auto_filled ? ' auto-filled' : '';
+      const req = f.required ? ' required' : '';
+      const lbl = f.label || f.name;
+
+      if (f.type === 'select' && f.options) {{
+        html += '<label>' + lbl + autoTag + '</label>';
+        html += '<select name="' + f.name + '"' + req + ' class="' + autoClass + '">';
+        f.options.forEach(o => {{
+          const sel = (o.value === f.value) ? ' selected' : '';
+          html += '<option value="' + o.value + '"' + sel + '>' + o.text + '</option>';
+        }});
+        html += '</select>';
+      }} else if (f.type === 'textarea') {{
+        html += '<label>' + lbl + autoTag + '</label>';
+        html += '<textarea name="' + f.name + '"' + req + ' class="' + autoClass + '" rows="3">' + (f.value || '') + '</textarea>';
+      }} else {{
+        html += '<label>' + lbl + autoTag + '</label>';
+        html += '<input type="' + (f.type || 'text') + '" name="' + f.name + '" value="' + (f.value || '').replace(/"/g, '&quot;') + '"'
+          + ' placeholder="' + (f.placeholder || '').replace(/"/g, '&quot;') + '"' + req + ' class="' + autoClass + '">';
+      }}
+    }});
+
+    // Store hidden fields and action as data attributes
+    html += '<input type="hidden" id="claimAction" value="' + (d.action || '') + '">';
+    html += '<input type="hidden" id="claimMethod" value="' + (d.method || 'POST') + '">';
+    (d.hidden_fields || []).forEach(h => {{
+      html += '<input type="hidden" name="' + h.name + '" value="' + (h.value || '').replace(/"/g, '&quot;') + '">';
+    }});
+
+    html += '<div id="claimMsg"></div>';
+    html += '<div style="display:flex;gap:12px;align-items:center;margin-top:18px">';
+    html += '<button type="submit" class="btn-primary btn-submit">Submit Claim</button>';
+    if (d.claim_url) {{
+      html += '<a href="' + d.claim_url + '" target="_blank" class="fallback-link" style="font-size:13px">Open form directly &rarr;</a>';
+    }}
+    html += '</div></form>';
+    container.innerHTML = html;
+
+  }} catch(e) {{
+    container.innerHTML = '<div class="msg err">Failed to load form: ' + e.message + '</div>';
+  }}
+}}
+
+async function submitClaim(event, settlementId) {{
+  event.preventDefault();
+  const form = document.getElementById('claimProxyForm');
+  const formData = new FormData(form);
+  const data = {{}};
+  formData.forEach((v, k) => {{ if (k !== 'claimAction' && k !== 'claimMethod') data[k] = v; }});
+
+  const actionUrl = document.getElementById('claimAction').value;
+  const method = document.getElementById('claimMethod').value;
+
+  const msg = document.getElementById('claimMsg');
+  msg.className = 'msg';
+  msg.textContent = 'Submitting...';
+  msg.style.color = '#888';
+
+  try {{
+    const r = await fetch('/v1/settlements/' + settlementId + '/claim-form/submit', {{
+      method: 'POST',
+      headers: {{'Content-Type':'application/json'}},
+      body: JSON.stringify({{ action_url: actionUrl, method: method, form_data: data }})
+    }});
+    const d = await r.json();
+    if (d.success) {{
+      msg.className = 'msg ok';
+      msg.textContent = d.message;
+    }} else {{
+      msg.className = 'msg err';
+      msg.textContent = d.message || 'Submission may not have succeeded. Check the claim site.';
+    }}
+  }} catch(e) {{
+    msg.className = 'msg err';
+    msg.textContent = 'Error: ' + e.message;
+  }}
+}}
+
+// Load profile on page load
+loadProfile();
+</script>
 </body>
 </html>"""
     return HTMLResponse(content=html)
