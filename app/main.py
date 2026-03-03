@@ -14107,7 +14107,7 @@ a:hover{{text-decoration:underline}}
 .profile-btn{{background:transparent;color:#4fc3f7;border:1px solid #4fc3f7;border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer;font-weight:500;margin-right:8px}}
 .profile-btn:hover{{background:rgba(79,195,247,.15)}}
 .profile-btn.has-profile{{color:#66bb6a;border-color:#66bb6a}}
-.profile-btn.has-profile::before{{content:"\2713 ";font-weight:700}}
+.profile-btn.has-profile::before{{content:"✓ ";font-weight:700}}
 .modal-overlay{{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:1000;justify-content:center;align-items:center}}
 .modal-overlay.open{{display:flex}}
 .modal{{background:#1e293b;border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:28px;width:90%;max-width:600px;max-height:85vh;overflow-y:auto;position:relative}}
@@ -14294,7 +14294,11 @@ async function openClaimForm(settlementId) {{
       document.getElementById('claimModalTitle').textContent = 'File Claim: ' + d.settlement.title;
     }}
 
-    let html = '<form id="claimProxyForm" onsubmit="submitClaim(event,' + settlementId + ')">';
+    let html = '';
+    if (d.followed_link) {{
+      html += '<div style="font-size:12px;color:#888;margin-bottom:12px;padding:8px;background:rgba(255,255,255,.05);border-radius:6px">Form found via: <a href="' + d.followed_link + '" target="_blank" style="color:#4fc3f7">' + d.followed_link + '</a></div>';
+    }}
+    html += '<form id="claimProxyForm" onsubmit="submitClaim(event,' + settlementId + ')">';
 
     // Render visible fields
     (d.fields || []).forEach(f => {{

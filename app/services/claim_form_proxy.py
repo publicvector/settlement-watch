@@ -7,7 +7,7 @@ and proxies form submissions.
 import re
 import logging
 from typing import Dict, List, Optional, Any
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -65,36 +65,49 @@ def _find_label(field_tag, soup) -> str:
     return ""
 
 
-def fetch_and_parse_form(claim_url: str) -> Dict[str, Any]:
-    """
-    Fetch a claim page and parse its form fields.
+# Keywords that indicate a link points to a claim/settlement form
+_CLAIM_LINK_PATTERNS = re.compile(
+    r"(file.{0,5}claim|submit.{0,5}claim|claim.{0,5}form|settlement.{0,10}(claim|form|submit)"
+    r"|make.{0,5}claim|start.{0,5}claim|begin.{0,5}claim|file.{0,5}now|claim.{0,5}now"
+    r"|submit.{0,5}now|online.{0,5}claim|claim.{0,5}portal)",
+    re.IGNORECASE,
+)
 
-    Returns dict with action, method, fields, hidden_fields, or error.
-    """
-    session = _make_session()
-    try:
-        resp = session.get(claim_url, timeout=20)
-        resp.raise_for_status()
-    except requests.RequestException as e:
-        logger.warning("Failed to fetch claim form %s: %s", claim_url, e)
-        return {"error": f"Could not fetch claim page: {e}"}
+# URL path segments that suggest a claim form destination
+_CLAIM_URL_PATTERNS = re.compile(
+    r"/(claim|submit-claim|file-claim|claim-form|claimform|make-a-claim)",
+    re.IGNORECASE,
+)
 
-    soup = BeautifulSoup(resp.text, "html.parser")
+# Domains that are article/aggregator sites (not settlement sites themselves)
+_AGGREGATOR_DOMAINS = {
+    "openclassactions.com", "www.openclassactions.com",
+    "classactionrebates.com", "www.classactionrebates.com",
+    "classaction.org", "www.classaction.org",
+    "bigclassaction.com", "www.bigclassaction.com",
+    "topclassactions.com", "www.topclassactions.com",
+}
+
+
+def _parse_form_from_soup(soup: BeautifulSoup, page_url: str) -> Optional[Dict[str, Any]]:
+    """
+    Extract form fields from a BeautifulSoup object.
+    Returns parsed form dict or None if no form found.
+    """
     form = soup.find("form")
     if not form:
-        return {"error": "No form found on page. The claim form may require JavaScript."}
+        return None
 
     action = form.get("action", "")
     if action:
-        action = urljoin(claim_url, action)
+        action = urljoin(page_url, action)
     else:
-        action = claim_url
+        action = page_url
     method = (form.get("method") or "POST").upper()
 
     fields: List[Dict[str, Any]] = []
     hidden_fields: List[Dict[str, str]] = []
 
-    # Process inputs
     for inp in form.find_all("input"):
         name = inp.get("name")
         if not name:
@@ -114,7 +127,6 @@ def fetch_and_parse_form(claim_url: str) -> Dict[str, Any]:
             "value": inp.get("value", ""),
         })
 
-    # Process selects
     for sel in form.find_all("select"):
         name = sel.get("name")
         if not name:
@@ -135,7 +147,6 @@ def fetch_and_parse_form(claim_url: str) -> Dict[str, Any]:
             "options": options,
         })
 
-    # Process textareas
     for ta in form.find_all("textarea"):
         name = ta.get("name")
         if not name:
@@ -154,6 +165,111 @@ def fetch_and_parse_form(claim_url: str) -> Dict[str, Any]:
         "method": method,
         "fields": fields,
         "hidden_fields": hidden_fields,
+    }
+
+
+def _score_claim_link(href: str, text: str, source_domain: str) -> int:
+    """Score a link by how likely it leads to a claim form. Higher = better."""
+    score = 0
+    href_lower = href.lower()
+    text_lower = text.lower().strip()
+
+    # Link text matches claim patterns
+    if _CLAIM_LINK_PATTERNS.search(text_lower):
+        score += 10
+
+    # URL path matches claim patterns
+    if _CLAIM_URL_PATTERNS.search(href_lower):
+        score += 8
+
+    # Links to a different domain (settlement site, not aggregator)
+    try:
+        link_domain = urlparse(href).netloc.lower()
+    except Exception:
+        return 0
+    if link_domain and link_domain != source_domain and link_domain not in _AGGREGATOR_DOMAINS:
+        score += 3
+        # Domain contains "settlement" or "claim"
+        if "settlement" in link_domain or "claim" in link_domain:
+            score += 5
+
+    # Penalize non-http links, anchors, mailto, etc.
+    if not href_lower.startswith("http"):
+        score -= 20
+
+    return score
+
+
+def _find_claim_links(soup: BeautifulSoup, page_url: str) -> List[str]:
+    """
+    Scan a page's links for ones likely pointing to a settlement claim form.
+    Returns URLs sorted by relevance (best first), deduplicated.
+    """
+    source_domain = urlparse(page_url).netloc.lower()
+    scored: List[tuple] = []
+    seen: set = set()
+
+    for a in soup.find_all("a", href=True):
+        href = urljoin(page_url, a["href"])
+        if href in seen:
+            continue
+        seen.add(href)
+        text = a.get_text(strip=True)
+        score = _score_claim_link(href, text, source_domain)
+        if score > 0:
+            scored.append((score, href, text))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [url for _, url, _ in scored[:8]]
+
+
+def fetch_and_parse_form(claim_url: str) -> Dict[str, Any]:
+    """
+    Fetch a claim page and parse its form fields.
+
+    If no form is found on the initial page, trawls links looking for
+    a settlement claim form on linked pages (one hop).
+
+    Returns dict with action, method, fields, hidden_fields, or error.
+    """
+    session = _make_session()
+    try:
+        resp = session.get(claim_url, timeout=20)
+        resp.raise_for_status()
+    except requests.RequestException as e:
+        logger.warning("Failed to fetch claim form %s: %s", claim_url, e)
+        return {"error": f"Could not fetch claim page: {e}"}
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    # Try parsing a form directly on this page
+    result = _parse_form_from_soup(soup, claim_url)
+    if result and len(result["fields"]) >= 2:
+        return result
+
+    # No usable form found (missing or trivial like a search bar) — trawl links
+    logger.info("No usable form on %s, trawling links for claim form...", claim_url)
+    candidate_urls = _find_claim_links(soup, claim_url)
+
+    if not candidate_urls:
+        return {"error": "No form found on page. The claim form may require JavaScript."}
+
+    for candidate_url in candidate_urls:
+        try:
+            resp2 = session.get(candidate_url, timeout=15)
+            resp2.raise_for_status()
+        except requests.RequestException:
+            continue
+        soup2 = BeautifulSoup(resp2.text, "html.parser")
+        result = _parse_form_from_soup(soup2, candidate_url)
+        if result and len(result["fields"]) >= 2:
+            logger.info("Found claim form via link: %s", candidate_url)
+            result["followed_link"] = candidate_url
+            return result
+
+    return {
+        "error": "No form found on page or linked pages. The claim form may require JavaScript.",
+        "tried_links": len(candidate_urls),
     }
 
 
