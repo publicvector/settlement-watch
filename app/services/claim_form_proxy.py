@@ -197,6 +197,16 @@ def _score_claim_link(href: str, text: str, source_domain: str) -> int:
     if not href_lower.startswith("http"):
         score -= 20
 
+    # Penalize PDF/document download links
+    try:
+        href_path = urlparse(href_lower).path
+    except Exception:
+        href_path = href_lower
+    if any(href_path.endswith(ext) for ext in (".pdf", ".doc", ".docx", ".xls", ".xlsx")):
+        score -= 15
+    if re.search(r"/(download|asset|attachment)s?[/?]", href_lower):
+        score -= 15
+
     return score
 
 
@@ -223,52 +233,139 @@ def _find_claim_links(soup: BeautifulSoup, page_url: str) -> List[str]:
     return [url for _, url, _ in scored[:8]]
 
 
+def _fetch_with_playwright(url: str, wait_ms: int = 5000) -> Optional[BeautifulSoup]:
+    """
+    Render a page with Playwright (headless Chromium) and return parsed soup.
+    Returns None on failure.
+    """
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        logger.warning("Playwright not installed, skipping JS rendering")
+        return None
+
+    # Skip URLs that are clearly document downloads (handle query strings)
+    url_lower = url.lower()
+    path_part = urlparse(url_lower).path
+    if any(path_part.endswith(ext) for ext in (".pdf", ".doc", ".docx", ".xls", ".xlsx", ".zip", ".csv")):
+        return None
+    # Skip common download path patterns
+    if re.search(r"/(download|asset|attachment)s?[/?]", url_lower):
+        return None
+
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(
+                user_agent=(
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                ),
+            )
+            page = context.new_page()
+            # Cancel any downloads that start
+            page.on("download", lambda dl: dl.cancel())
+            page.goto(url, wait_until="domcontentloaded", timeout=20000)
+            # Wait for JS to render form fields
+            page.wait_for_timeout(wait_ms)
+            # Also try waiting for common form elements
+            try:
+                page.wait_for_selector(
+                    "form input, form select, form textarea",
+                    timeout=8000,
+                )
+            except Exception:
+                pass  # May not have form inputs yet, continue with what we have
+            html = page.content()
+            final_url = page.url
+            context.close()
+            browser.close()
+        soup = BeautifulSoup(html, "html.parser")
+        soup._final_url = final_url  # Attach for URL resolution
+        return soup
+    except Exception as e:
+        logger.warning("Playwright failed for %s: %s", url, e)
+        return None
+
+
+def _try_parse_url(url: str, session: requests.Session, use_playwright: bool = False):
+    """
+    Try to parse a form from a URL. First with requests, then optionally Playwright.
+    Returns (parsed_form_dict, soup) or (None, soup_or_none).
+    """
+    soup = None
+    # Try requests + BS4 first (fast)
+    try:
+        resp = session.get(url, timeout=20)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, "html.parser")
+        result = _parse_form_from_soup(soup, url)
+        if result and len(result["fields"]) >= 2:
+            return result, soup
+    except requests.RequestException:
+        pass
+
+    # Fall back to Playwright for JS-rendered pages
+    if use_playwright:
+        pw_soup = _fetch_with_playwright(url)
+        if pw_soup:
+            final_url = getattr(pw_soup, "_final_url", url)
+            result = _parse_form_from_soup(pw_soup, final_url)
+            if result and len(result["fields"]) >= 2:
+                result["js_rendered"] = True
+                return result, pw_soup
+            # Keep the PW soup for link trawling even if no form found
+            if soup is None:
+                soup = pw_soup
+
+    return None, soup
+
+
 def fetch_and_parse_form(claim_url: str) -> Dict[str, Any]:
     """
     Fetch a claim page and parse its form fields.
 
-    If no form is found on the initial page, trawls links looking for
-    a settlement claim form on linked pages (one hop).
+    Strategy (each step tries requests first, then Playwright):
+    1. Parse form directly on the claim URL
+    2. Trawl links on the page for a settlement claim form (one hop)
 
     Returns dict with action, method, fields, hidden_fields, or error.
     """
     session = _make_session()
-    try:
-        resp = session.get(claim_url, timeout=20)
-        resp.raise_for_status()
-    except requests.RequestException as e:
-        logger.warning("Failed to fetch claim form %s: %s", claim_url, e)
-        return {"error": f"Could not fetch claim page: {e}"}
 
-    soup = BeautifulSoup(resp.text, "html.parser")
-
-    # Try parsing a form directly on this page
-    result = _parse_form_from_soup(soup, claim_url)
-    if result and len(result["fields"]) >= 2:
+    # Step 1: Try the claim URL directly
+    result, soup = _try_parse_url(claim_url, session, use_playwright=True)
+    if result:
         return result
 
-    # No usable form found (missing or trivial like a search bar) — trawl links
-    logger.info("No usable form on %s, trawling links for claim form...", claim_url)
-    candidate_urls = _find_claim_links(soup, claim_url)
-
-    if not candidate_urls:
-        return {"error": "No form found on page. The claim form may require JavaScript."}
-
-    for candidate_url in candidate_urls:
+    # Step 2: Trawl links — need page content for link extraction
+    # Get soup from requests if we don't have it yet
+    if soup is None:
         try:
-            resp2 = session.get(candidate_url, timeout=15)
-            resp2.raise_for_status()
+            resp = session.get(claim_url, timeout=20)
+            resp.raise_for_status()
+            soup = BeautifulSoup(resp.text, "html.parser")
         except requests.RequestException:
-            continue
-        soup2 = BeautifulSoup(resp2.text, "html.parser")
-        result = _parse_form_from_soup(soup2, candidate_url)
-        if result and len(result["fields"]) >= 2:
+            # Try Playwright just for link extraction
+            soup = _fetch_with_playwright(claim_url)
+
+    if soup is None:
+        return {"error": f"Could not fetch claim page: {claim_url}"}
+
+    candidate_urls = _find_claim_links(soup, claim_url)
+    if not candidate_urls:
+        return {"error": "No form found on page. The claim form may require JavaScript or is behind a login."}
+
+    logger.info("Trawling %d candidate links from %s", len(candidate_urls), claim_url)
+    for candidate_url in candidate_urls:
+        result, _ = _try_parse_url(candidate_url, session, use_playwright=True)
+        if result:
             logger.info("Found claim form via link: %s", candidate_url)
             result["followed_link"] = candidate_url
             return result
 
     return {
-        "error": "No form found on page or linked pages. The claim form may require JavaScript.",
+        "error": "No usable form found on page or linked pages.",
         "tried_links": len(candidate_urls),
     }
 

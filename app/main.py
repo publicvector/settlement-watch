@@ -13751,23 +13751,24 @@ def get_settlement_analytics(state: str = None):
 # ============================================================================
 
 
-def _settlement_feed_items(limit: int = 100) -> list:
+def _settlement_feed_items(limit: int = 100, status: Optional[str] = None) -> list:
     """Get settlements from DB plus any in-memory recorded ones."""
     _ensure_initialized()
-    db_settlements = list_settlements_db(limit=limit)
+    db_settlements = list_settlements_db(limit=limit, status=status)
 
-    # Also include any in-memory recorded settlements
-    for s in _settlements.values():
-        if not s.get("confidential"):
-            db_settlements.append({
-                "title": s.get("case_number", "Settlement"),
-                "amount": s.get("amount"),
-                "amount_formatted": f"${s.get('amount'):,.0f}" if s.get("amount") else "",
-                "url": f"/v1/state-courts/settlements/{s['id']}",
-                "description": s.get("notes", ""),
-                "source": s.get("state", "State Court"),
-                "pub_date": s.get("settlement_date"),
-            })
+    # Skip in-memory settlements when filtering by status (they lack claim metadata)
+    if not status:
+        for s in _settlements.values():
+            if not s.get("confidential"):
+                db_settlements.append({
+                    "title": s.get("case_number", "Settlement"),
+                    "amount": s.get("amount"),
+                    "amount_formatted": f"${s.get('amount'):,.0f}" if s.get("amount") else "",
+                    "url": f"/v1/state-courts/settlements/{s['id']}",
+                    "description": s.get("notes", ""),
+                    "source": s.get("state", "State Court"),
+                    "pub_date": s.get("settlement_date"),
+                })
     return db_settlements
 
 
@@ -13788,6 +13789,11 @@ def settlement_rss_feed():
     for s in all_settlements[:100]:
         amount = s.get('amount_formatted') or ''
         title = f"[{amount}] {s['title']}" if amount else s['title']
+        claim_elements = ""
+        if s.get('claim_url'):
+            claim_elements += f"\n      <claim:url>{s['claim_url']}</claim:url>"
+        if s.get('claim_deadline'):
+            claim_elements += f"\n      <claim:deadline>{s['claim_deadline']}</claim:deadline>"
         items.append(f"""
     <item>
       <title><![CDATA[{title}]]></title>
@@ -13797,11 +13803,11 @@ def settlement_rss_feed():
 Amount: {amount}
 Source: {s.get('source', 'Unknown')}]]></description>
       <pubDate>{s.get('pub_date', now)}</pubDate>
-      <guid isPermaLink="false">{s.get('guid') or s.get('url', '')}</guid>
+      <guid isPermaLink="false">{s.get('guid') or s.get('url', '')}</guid>{claim_elements}
     </item>""")
 
     rss = f"""<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:claim="https://pacer-rss.vercel.app/ns/claim">
   <channel>
     <title>Settlement Watch - Legal Settlement Feed</title>
     <link>https://pacer-rss.vercel.app/</link>
@@ -13829,6 +13835,11 @@ def settlement_atom_feed():
     for s in all_settlements[:100]:
         amount = s.get('amount_formatted') or ''
         title = f"[{amount}] {s['title']}" if amount else s['title']
+        claim_elements = ""
+        if s.get('claim_url'):
+            claim_elements += f"\n    <claim:url>{s['claim_url']}</claim:url>"
+        if s.get('claim_deadline'):
+            claim_elements += f"\n    <claim:deadline>{s['claim_deadline']}</claim:deadline>"
         entries.append(f"""
   <entry>
     <title><![CDATA[{title}]]></title>
@@ -13838,17 +13849,108 @@ def settlement_atom_feed():
     <summary><![CDATA[{s.get('description', '')}
 
 Amount: {amount}
-Source: {s.get('source', 'Unknown')}]]></summary>
+Source: {s.get('source', 'Unknown')}]]></summary>{claim_elements}
   </entry>""")
 
     atom = f"""<?xml version="1.0" encoding="UTF-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:claim="https://pacer-rss.vercel.app/ns/claim">
   <title>Settlement Watch - Legal Settlement Feed</title>
   <link href="https://pacer-rss.vercel.app/"/>
   <link href="https://pacer-rss.vercel.app/feed.atom" rel="self"/>
   <updated>{now}</updated>
   <id>https://pacer-rss.vercel.app/</id>
   <subtitle>Legal settlement discoveries from federal and state courts</subtitle>
+  {''.join(entries)}
+</feed>"""
+
+    return Response(content=atom, media_type="application/atom+xml")
+
+
+@app.get("/settlements-active.xml", response_class=Response)
+def active_claims_rss_feed():
+    """RSS feed of active settlements with claim URLs and upcoming deadlines."""
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S +0000')
+    all_settlements = _settlement_feed_items(status='active')
+    # Only include settlements that have a claim URL
+    active = [s for s in all_settlements if s.get('claim_url')]
+
+    items = []
+    for s in active[:100]:
+        amount = s.get('amount_formatted') or ''
+        title = f"[{amount}] {s['title']}" if amount else s['title']
+        deadline_text = f"\nClaim Deadline: {s['claim_deadline']}" if s.get('claim_deadline') else ""
+        claim_elements = f"\n      <claim:url>{s['claim_url']}</claim:url>"
+        if s.get('claim_deadline'):
+            claim_elements += f"\n      <claim:deadline>{s['claim_deadline']}</claim:deadline>"
+        items.append(f"""
+    <item>
+      <title><![CDATA[{title}]]></title>
+      <link>{s.get('url', '')}</link>
+      <description><![CDATA[{s.get('description', '')}
+
+Amount: {amount}
+Source: {s.get('source', 'Unknown')}
+Claim Form: {s['claim_url']}{deadline_text}]]></description>
+      <pubDate>{s.get('pub_date', now)}</pubDate>
+      <guid isPermaLink="false">{s.get('guid') or s.get('url', '')}</guid>{claim_elements}
+    </item>""")
+
+    rss = f"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:claim="https://pacer-rss.vercel.app/ns/claim">
+  <channel>
+    <title>Settlement Watch - Active Claims Feed</title>
+    <link>https://pacer-rss.vercel.app/</link>
+    <description>Active legal settlements with open claim filing deadlines. Subscribe to get notified before deadlines expire.</description>
+    <language>en-us</language>
+    <lastBuildDate>{now}</lastBuildDate>
+    <atom:link href="https://pacer-rss.vercel.app/settlements-active.xml" rel="self" type="application/rss+xml"/>
+    {''.join(items)}
+  </channel>
+</rss>"""
+
+    return Response(content=rss, media_type="application/rss+xml")
+
+
+@app.get("/settlements-active.atom", response_class=Response)
+def active_claims_atom_feed():
+    """Atom feed of active settlements with claim URLs and upcoming deadlines."""
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    all_settlements = _settlement_feed_items(status='active')
+    active = [s for s in all_settlements if s.get('claim_url')]
+
+    entries = []
+    for s in active[:100]:
+        amount = s.get('amount_formatted') or ''
+        title = f"[{amount}] {s['title']}" if amount else s['title']
+        deadline_text = f"\nClaim Deadline: {s['claim_deadline']}" if s.get('claim_deadline') else ""
+        claim_elements = f"\n    <claim:url>{s['claim_url']}</claim:url>"
+        if s.get('claim_deadline'):
+            claim_elements += f"\n    <claim:deadline>{s['claim_deadline']}</claim:deadline>"
+        entries.append(f"""
+  <entry>
+    <title><![CDATA[{title}]]></title>
+    <link href="{s.get('url', '')}"/>
+    <id>{s.get('guid') or s.get('url', '')}</id>
+    <updated>{now}</updated>
+    <summary><![CDATA[{s.get('description', '')}
+
+Amount: {amount}
+Source: {s.get('source', 'Unknown')}
+Claim Form: {s['claim_url']}{deadline_text}]]></summary>{claim_elements}
+  </entry>""")
+
+    atom = f"""<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:claim="https://pacer-rss.vercel.app/ns/claim">
+  <title>Settlement Watch - Active Claims Feed</title>
+  <link href="https://pacer-rss.vercel.app/"/>
+  <link href="https://pacer-rss.vercel.app/settlements-active.atom" rel="self"/>
+  <updated>{now}</updated>
+  <id>https://pacer-rss.vercel.app/settlements-active</id>
+  <subtitle>Active legal settlements with open claim filing deadlines</subtitle>
   {''.join(entries)}
 </feed>"""
 
@@ -14295,8 +14397,14 @@ async function openClaimForm(settlementId) {{
     }}
 
     let html = '';
-    if (d.followed_link) {{
-      html += '<div style="font-size:12px;color:#888;margin-bottom:12px;padding:8px;background:rgba(255,255,255,.05);border-radius:6px">Form found via: <a href="' + d.followed_link + '" target="_blank" style="color:#4fc3f7">' + d.followed_link + '</a></div>';
+    if (d.followed_link || d.js_rendered) {{
+      let info = '';
+      if (d.js_rendered) info += '<span style="color:#ff9800">JS-rendered</span>';
+      if (d.followed_link) {{
+        if (info) info += ' &middot; ';
+        info += 'via: <a href="' + d.followed_link + '" target="_blank" style="color:#4fc3f7">' + d.followed_link + '</a>';
+      }}
+      html += '<div style="font-size:12px;color:#888;margin-bottom:12px;padding:8px;background:rgba(255,255,255,.05);border-radius:6px">' + info + '</div>';
     }}
     html += '<form id="claimProxyForm" onsubmit="submitClaim(event,' + settlementId + ')">';
 
