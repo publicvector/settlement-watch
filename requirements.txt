@@ -7,22 +7,13 @@ lxml>=4.9.0
 pydantic>=2.0.0
 anthropic>=0.40.0
 
-# Settlement dorker (multi-engine search)
-ddgs>=6.0.0  # DuckDuckGo search (renamed from duckduckgo-search)
+# Settlement dorker
+duckduckgo-search>=4.0.0
 
 # Async HTTP
 aiohttp>=3.9.0
 python-dateutil>=2.8.0
 
-# PDF text extraction (for GovInfo court opinions)
-PyPDF2>=3.0.0
-
-# HuggingFace datasets (for legal opinion corpus)
-datasets>=2.14.0
-
-# JS-rendered claim form parsing
-playwright>=1.40.0
-
-# ML inference (lightweight ONNX runtime)
-onnxruntime>=1.16.0
-numpy>=1.24.0
+# Note: Heavy dependencies (playwright, datasets, onnxruntime, numpy, PyPDF2)
+# are in requirements-dev.txt for local development.
+# Excluded here to stay under Vercel's 500MB Lambda limit.
