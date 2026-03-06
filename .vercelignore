@@ -3,6 +3,7 @@
 *.sqlite
 *.sqlite3
 app/demo.db
+app/*.db
 data/*.db
 
 # Large data files (exclude pkl but keep onnx)
@@ -11,9 +12,19 @@ turso_dump.sql
 *.csv
 *.csv.bz2
 *.pkl
+data/*.txt
+data/**/*.txt
 /data/*.db
 /data/models/*/*.pkl
-# Keep ONNX models: /data/models/*/onnx/*.onnx
+/data/fjc/
+data/fjc/
+data/opinion-clusters.csv.bz2
+# Keep ONNX models - explicit inclusion
+!data/models/
+!data/models/v1.0.0/
+!data/models/v1.0.0/onnx/
+!data/models/v1.0.0/onnx/*.onnx
+!data/models/v1.0.0/metadata.json
 
 # Development files
 .env
@@ -49,3 +60,7 @@ scripts/
 
 # Downloaded documents
 docs_cache/
+downloads/
+
+# Scripts with large model files
+scripts/*.pkl

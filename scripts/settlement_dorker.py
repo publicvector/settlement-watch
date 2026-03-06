@@ -1,15 +1,37 @@
 #!/usr/bin/env python3
 """
 Settlement Document Dorker
-Finds settlement documents via search engine queries using DuckDuckGo API.
+Finds settlement documents via search engine queries using multiple engines.
+
+Supports:
+- DuckDuckGo (default)
+- Bing (API or scrape mode)
+- Yandex (API or scrape mode)
 """
 import asyncio
 import re
 import json
 from datetime import datetime
-from duckduckgo_search import DDGS
 from typing import List, Dict, Optional
 from dataclasses import dataclass, asdict
+
+# Try to import multi-engine search
+try:
+    from multi_engine_search import MultiEngineSearch, SearchResult as MESearchResult
+    HAS_MULTI_ENGINE = True
+except ImportError:
+    HAS_MULTI_ENGINE = False
+
+# Fallback to DuckDuckGo only - try new ddgs first
+try:
+    from ddgs import DDGS
+    HAS_DDGS = True
+except ImportError:
+    try:
+        from duckduckgo_search import DDGS
+        HAS_DDGS = True
+    except ImportError:
+        HAS_DDGS = False
 
 
 @dataclass
@@ -20,6 +42,7 @@ class SearchResult:
     amount: Optional[str] = None
     is_pdf: bool = False
     query: str = ""
+    engine: str = "duckduckgo"
 
 
 # Settlement administration company domains
@@ -348,11 +371,38 @@ DORK_TEMPLATES = {
 
 
 class SettlementDorker:
-    """Search engine dorking for settlement documents using DuckDuckGo API."""
+    """
+    Search engine dorking for settlement documents.
 
-    def __init__(self):
+    Supports multiple search engines:
+    - DuckDuckGo (default, always available)
+    - Bing (optional, more results)
+    - Yandex (optional, different index)
+    """
+
+    def __init__(self, engines: Optional[List[str]] = None, multi_engine: bool = False):
+        """
+        Initialize the dorker.
+
+        Args:
+            engines: List of engines to use ['duckduckgo', 'bing', 'yandex']
+                    Defaults to ['duckduckgo'] for backward compatibility
+            multi_engine: If True, use all available engines
+        """
         self.results: List[SearchResult] = []
-        self.ddgs = DDGS()
+        self.multi_engine_mode = multi_engine or (engines and len(engines) > 1)
+
+        if self.multi_engine_mode and HAS_MULTI_ENGINE:
+            # Use multi-engine search
+            self.searcher = MultiEngineSearch(engines=engines)
+            self.ddgs = None
+            print(f"  Multi-engine mode: {list(self.searcher.engines.keys())}")
+        elif HAS_DDGS:
+            # Fallback to DuckDuckGo only
+            self.ddgs = DDGS()
+            self.searcher = None
+        else:
+            raise ImportError("No search engines available. Install duckduckgo-search or use multi_engine_search.")
 
     def _extract_amount(self, text: str) -> Optional[str]:
         """Extract settlement amount from text."""
@@ -373,31 +423,49 @@ class SettlementDorker:
         return None
 
     def search(self, query: str, max_results: int = 10) -> List[SearchResult]:
-        """Search DuckDuckGo using API."""
+        """Search using configured engine(s)."""
         results = []
 
-        try:
-            # Use text search
-            ddg_results = self.ddgs.text(query, max_results=max_results)
-
-            for r in ddg_results:
-                url = r.get('href', '') or r.get('link', '')
-                title = r.get('title', '')
-                snippet = r.get('body', '') or r.get('snippet', '')
-
-                if url:
-                    amount = self._extract_amount(title + ' ' + snippet)
+        if self.searcher:
+            # Multi-engine search
+            try:
+                me_results = self.searcher.run_dork_query(query, max_results)
+                for r in me_results:
                     results.append(SearchResult(
-                        title=title,
-                        url=url,
-                        snippet=snippet,
-                        amount=amount,
-                        is_pdf=url.lower().endswith('.pdf'),
-                        query=query
+                        title=r.title,
+                        url=r.url,
+                        snippet=r.snippet,
+                        amount=r.amount,
+                        is_pdf=r.is_pdf,
+                        query=query,
+                        engine=r.engine
                     ))
+            except Exception as e:
+                print(f"      Multi-engine search error: {e}")
+        elif self.ddgs:
+            # DuckDuckGo only
+            try:
+                ddg_results = self.ddgs.text(query, max_results=max_results)
 
-        except Exception as e:
-            print(f"      Search error: {e}")
+                for r in ddg_results:
+                    url = r.get('href', '') or r.get('link', '')
+                    title = r.get('title', '')
+                    snippet = r.get('body', '') or r.get('snippet', '')
+
+                    if url:
+                        amount = self._extract_amount(title + ' ' + snippet)
+                        results.append(SearchResult(
+                            title=title,
+                            url=url,
+                            snippet=snippet,
+                            amount=amount,
+                            is_pdf=url.lower().endswith('.pdf'),
+                            query=query,
+                            engine='duckduckgo'
+                        ))
+
+            except Exception as e:
+                print(f"      DuckDuckGo search error: {e}")
 
         return results
 
@@ -481,6 +549,17 @@ class SettlementDorker:
         print(f"TOTAL: {len(self.results)} results")
         print(f"PDFs: {len(self.filter_pdfs())}")
         print(f"With amounts: {len(self.filter_with_amounts())}")
+
+        # Group by engine
+        by_engine = {}
+        for r in self.results:
+            engine = getattr(r, 'engine', 'duckduckgo')
+            by_engine.setdefault(engine, []).append(r)
+
+        print(f"\nBy engine:")
+        for engine, items in by_engine.items():
+            print(f"  {engine}: {len(items)} results")
+
         print(f"{'=' * 60}")
 
         # Group by query
@@ -491,7 +570,8 @@ class SettlementDorker:
         for query, items in list(by_query.items())[:10]:
             print(f"\n[{query}...] - {len(items)} results")
             for r in items[:3]:
-                print(f"  * {r.title[:55]}...")
+                engine = getattr(r, 'engine', 'ddg')
+                print(f"  * [{engine[:4]}] {r.title[:50]}...")
                 if r.amount:
                     print(f"    Amount: {r.amount}")
                 print(f"    {'PDF' if r.is_pdf else 'Web'}: {r.url[:60]}...")
@@ -506,13 +586,37 @@ def main():
     parser.add_argument('--full', action='store_true', help='Full scan (all categories)')
     parser.add_argument('--category', type=str, help='Run specific category')
     parser.add_argument('--max-results', type=int, default=5, help='Max results per query')
+    parser.add_argument('--multi', action='store_true', help='Use all search engines (DuckDuckGo + Bing + Yandex)')
+    parser.add_argument('--engines', nargs='+', choices=['duckduckgo', 'brave', 'bing', 'yandex'],
+                       help='Specific engines to use')
+    parser.add_argument('--output', '-o', type=str, help='Output JSON file')
     args = parser.parse_args()
 
     print("=" * 70)
-    print("SETTLEMENT DOCUMENT DORKER - ADVANCED")
+    print("SETTLEMENT DOCUMENT DORKER - MULTI-ENGINE")
     print("=" * 70)
 
-    dorker = SettlementDorker()
+    # Initialize with selected engines
+    if args.multi:
+        # Use SerpAPI versions if available (more reliable than scraping)
+        import os
+        if os.getenv('SERPAPI_KEY'):
+            engines = ['duckduckgo', 'serpapi_google', 'serpapi_bing', 'serpapi_yandex']
+            print("\n[*] Multi-engine mode: DuckDuckGo + Google + Bing + Yandex (via SerpAPI)")
+        elif os.getenv('BRAVE_API_KEY'):
+            engines = ['duckduckgo', 'brave']
+            print("\n[*] Multi-engine mode: DuckDuckGo + Brave")
+        else:
+            engines = ['duckduckgo', 'bing', 'yandex']
+            print("\n[*] Multi-engine mode: DuckDuckGo + Bing + Yandex (scraping, may fail)")
+    elif args.engines:
+        engines = args.engines
+        print(f"\n[*] Engines: {', '.join(engines)}")
+    else:
+        engines = None
+        print("\n[*] Single engine mode: DuckDuckGo")
+
+    dorker = SettlementDorker(engines=engines, multi_engine=args.multi or bool(args.engines))
 
     if args.category:
         # Run single category
@@ -677,12 +781,24 @@ def main():
         print(f"  {r.url[:80]}")
 
     # Save results
-    with open("/tmp/settlement_dork_results.json", "w") as f:
+    output_file = args.output or "/tmp/settlement_dork_results.json"
+    with open(output_file, "w") as f:
         f.write(dorker.to_json())
     print(f"\n\n{'=' * 70}")
-    print(f"SAVED: {len(dorker.results)} results to /tmp/settlement_dork_results.json")
+    print(f"SAVED: {len(dorker.results)} results to {output_file}")
     print(f"WITH AMOUNTS: {len(dorker.filter_with_amounts())}")
     print(f"PDFs: {len(dorker.filter_pdfs())}")
+
+    # Show engine breakdown if multi-engine
+    if dorker.multi_engine_mode:
+        by_engine = {}
+        for r in dorker.results:
+            engine = getattr(r, 'engine', 'unknown')
+            by_engine.setdefault(engine, []).append(r)
+        print("\nResults by engine:")
+        for engine, items in sorted(by_engine.items(), key=lambda x: -len(x[1])):
+            print(f"  {engine}: {len(items)}")
+
     print("=" * 70)
 
 

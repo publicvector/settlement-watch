@@ -750,6 +750,12 @@ def init_db():
             except Exception:
                 pass  # Table may not exist yet
 
+            # Migration: ensure guid has unique index for upserts
+            try:
+                conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_settlements_guid ON settlements(guid)")
+            except Exception:
+                pass
+
             # Seed settlements from settlement_watch.db if table is empty
             try:
                 cur = conn.execute("SELECT COUNT(*) as cnt FROM settlements")
@@ -914,11 +920,11 @@ def insert_rss_items(items: Iterable[Dict[str, Any]]):
             )
 
 def list_rss_items(
-    court_code: str | None = None,
-    courts: list[str] | None = None,
-    case_type: str | None = None,
-    nature_of_suit: str | None = None,
-    keyword: str | None = None,
+    court_code: Optional[str] = None,
+    courts: Optional[List[str]] = None,
+    case_type: Optional[str] = None,
+    nature_of_suit: Optional[str] = None,
+    keyword: Optional[str] = None,
     new_only: bool = False,
     limit: int = 50
 ):
@@ -1071,6 +1077,48 @@ def get_settlement_stats() -> Dict[str, Any]:
     ).fetchone()
     status_dict = dict(status_rows) if status_rows else {}
 
+    # Payout stats
+    payout_stats_row = conn.execute(
+        """SELECT
+            COUNT(*) as with_payout,
+            ROUND(AVG(payout_max), 2) as avg_payout,
+            ROUND(MIN(payout_max), 2) as min_payout,
+            MAX(payout_max) as max_payout,
+            ROUND(SUM(payout_max) / COUNT(*), 2) as mean_payout
+        FROM settlements WHERE payout_max IS NOT NULL AND payout_max > 0"""
+    ).fetchone()
+    payout_dict = dict(payout_stats_row) if payout_stats_row else {}
+
+    # Median payout (SQLite lacks MEDIAN, so fetch sorted values)
+    median_payout = None
+    if payout_dict.get("with_payout", 0) > 0:
+        sorted_payouts = conn.execute(
+            "SELECT payout_max FROM settlements WHERE payout_max IS NOT NULL AND payout_max > 0 ORDER BY payout_max"
+        ).fetchall()
+        vals = [r[0] for r in sorted_payouts]
+        n = len(vals)
+        median_payout = (vals[n // 2] + vals[(n - 1) // 2]) / 2 if n else None
+
+    # Payout distribution brackets
+    payout_brackets = conn.execute(
+        """SELECT
+            SUM(CASE WHEN payout_max <= 10 THEN 1 ELSE 0 END) as "under_10",
+            SUM(CASE WHEN payout_max > 10 AND payout_max <= 50 THEN 1 ELSE 0 END) as "10_to_50",
+            SUM(CASE WHEN payout_max > 50 AND payout_max <= 100 THEN 1 ELSE 0 END) as "50_to_100",
+            SUM(CASE WHEN payout_max > 100 AND payout_max <= 500 THEN 1 ELSE 0 END) as "100_to_500",
+            SUM(CASE WHEN payout_max > 500 AND payout_max <= 1000 THEN 1 ELSE 0 END) as "500_to_1000",
+            SUM(CASE WHEN payout_max > 1000 THEN 1 ELSE 0 END) as "over_1000"
+        FROM settlements WHERE payout_max IS NOT NULL AND payout_max > 0"""
+    ).fetchone()
+    brackets_dict = dict(payout_brackets) if payout_brackets else {}
+
+    # Top 10 highest payouts
+    top_payouts = conn.execute(
+        """SELECT title, payout_min, payout_max, payout_description, claim_url, category
+        FROM settlements WHERE payout_max IS NOT NULL AND payout_max > 0
+        ORDER BY payout_max DESC LIMIT 10"""
+    ).fetchall()
+
     return {
         "total": total_count,
         "active": status_dict.get("active", 0),
@@ -1079,6 +1127,15 @@ def get_settlement_stats() -> Dict[str, Any]:
         "with_claim_url": status_dict.get("with_claim_url", 0),
         "by_category": [dict(r) for r in by_category],
         "by_source": [dict(r) for r in by_source],
+        "payouts": {
+            "with_payout_data": payout_dict.get("with_payout", 0),
+            "avg_payout": payout_dict.get("avg_payout"),
+            "median_payout": round(median_payout, 2) if median_payout else None,
+            "min_payout": payout_dict.get("min_payout"),
+            "max_payout": payout_dict.get("max_payout"),
+            "distribution": brackets_dict,
+            "top_payouts": [dict(r) for r in top_payouts],
+        },
     }
 
 

@@ -13958,11 +13958,14 @@ Claim Form: {s['claim_url']}{deadline_text}]]></summary>{claim_elements}
 
 
 @app.get("/api/settlements/public")
-def public_settlements_api():
+def public_settlements_api(
+    status: Optional[str] = None,
+    limit: int = 500,
+):
     """JSON API for public settlement data."""
     from datetime import datetime, timezone
 
-    all_settlements = _settlement_feed_items()
+    all_settlements = _settlement_feed_items(limit=limit, status=status)
     return {
         "count": len(all_settlements),
         "updated": datetime.now(timezone.utc).isoformat(),

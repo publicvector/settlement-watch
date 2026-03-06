@@ -310,9 +310,143 @@
             </div>
         </div>
 
+        <!-- ML-Powered Prediction -->
+        <div class="calculator" style="border-color: rgba(102, 187, 106, 0.3); background: linear-gradient(135deg, #1a3a2f 0%, #1a2d27 100%);">
+            <h2 style="color: #66bb6a;">🤖 ML-Powered Case Prediction</h2>
+            <p style="color: #888; margin-bottom: 20px; font-size: 14px;">Predictions powered by machine learning models trained on 871 historical cases</p>
+            <div class="calc-grid">
+                <div class="calc-field">
+                    <label>Court</label>
+                    <select id="ml-court">
+                        <option value="cacd">C.D. California</option>
+                        <option value="nysd">S.D. New York</option>
+                        <option value="cand">N.D. California</option>
+                        <option value="txsd">S.D. Texas</option>
+                        <option value="ilnd">N.D. Illinois</option>
+                        <option value="flsd">S.D. Florida</option>
+                        <option value="dcd">D.C.</option>
+                        <option value="njd">D. New Jersey</option>
+                        <option value="paed">E.D. Pennsylvania</option>
+                    </select>
+                </div>
+                <div class="calc-field">
+                    <label>Nature of Suit</label>
+                    <select id="ml-nos">
+                        <option value="850">Securities (850)</option>
+                        <option value="442">Civil Rights - Employment (442)</option>
+                        <option value="365">Product Liability (365)</option>
+                        <option value="370">Fraud (370)</option>
+                        <option value="480">Consumer Credit (480)</option>
+                        <option value="830">Patent (830)</option>
+                        <option value="820">Copyright (820)</option>
+                        <option value="710">Fair Labor (710)</option>
+                        <option value="893">Environmental (893)</option>
+                        <option value="470">RICO (470)</option>
+                    </select>
+                </div>
+                <div class="calc-field">
+                    <label>Defendant</label>
+                    <input type="text" id="ml-defendant" placeholder="e.g., Google, Bank of America" value="Google">
+                </div>
+                <div class="calc-field">
+                    <label>Class Action?</label>
+                    <select id="ml-class-action">
+                        <option value="true">Yes - Class Action</option>
+                        <option value="false">No - Individual</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="runMLPrediction()" style="width: 100%; padding: 14px; background: #66bb6a; border: none; border-radius: 6px; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 20px;">
+                Generate ML Prediction
+            </button>
+            <div id="ml-results" style="display: none;">
+                <!-- Outcome Probabilities Bar -->
+                <div style="margin-bottom: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                    <div class="label" style="margin-bottom: 10px; font-size: 12px; color: #888;">OUTCOME PROBABILITIES (sum to 100%)</div>
+                    <div id="ml-prob-bar" style="display: flex; height: 32px; border-radius: 4px; overflow: hidden; font-size: 11px; font-weight: 600;">
+                        <div id="prob-dismissal" style="background: #ef5350; display: flex; align-items: center; justify-content: center; color: #fff;"></div>
+                        <div id="prob-settlement" style="background: #66bb6a; display: flex; align-items: center; justify-content: center; color: #fff;"></div>
+                        <div id="prob-judgment" style="background: #ffa726; display: flex; align-items: center; justify-content: center; color: #fff;"></div>
+                        <div id="prob-trial" style="background: #ab47bc; display: flex; align-items: center; justify-content: center; color: #fff;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: #888;">
+                        <span>🔴 Dismissal</span>
+                        <span>🟢 Settlement</span>
+                        <span>🟠 Judgment</span>
+                        <span>🟣 Trial</span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+                    <div class="calc-result">
+                        <div class="label">Dismissal Risk</div>
+                        <div class="value" id="ml-dismissal" style="font-size: 24px;">--</div>
+                        <div class="range" id="ml-dismissal-conf">--</div>
+                    </div>
+                    <div class="calc-result">
+                        <div class="label">Survival → Settlement</div>
+                        <div class="value" id="ml-settlement" style="font-size: 24px; color: #66bb6a;">--</div>
+                        <div class="range" id="ml-survival">--</div>
+                    </div>
+                    <div class="calc-result">
+                        <div class="label">Est. Duration</div>
+                        <div class="value" id="ml-duration" style="font-size: 24px; color: #ffa726;">--</div>
+                        <div class="range" id="ml-duration-range">--</div>
+                    </div>
+                    <div class="calc-result">
+                        <div class="label">Confidence</div>
+                        <div class="value" id="ml-confidence" style="font-size: 20px;">--</div>
+                        <div class="range" id="ml-version">--</div>
+                    </div>
+                </div>
+
+                <!-- Value Estimates -->
+                <div style="margin-bottom: 15px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                    <div class="label" style="margin-bottom: 10px; font-size: 12px; color: #888;">EXPECTED VALUE (Risk-Adjusted)</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                        <div class="calc-result">
+                            <div class="label">Conservative (P25)</div>
+                            <div class="value" id="ml-value-low">--</div>
+                        </div>
+                        <div class="calc-result">
+                            <div class="label">Expected (P50)</div>
+                            <div class="value" id="ml-value-mid">--</div>
+                        </div>
+                        <div class="calc-result">
+                            <div class="label">Aggressive (P75)</div>
+                            <div class="value" id="ml-value-high">--</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 15px; background: rgba(102, 187, 106, 0.1); border-radius: 8px; border: 1px solid rgba(102, 187, 106, 0.3);">
+                    <div class="label" style="margin-bottom: 10px; font-size: 12px; color: #66bb6a;">IF CASE SURVIVES DISMISSAL</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                        <div class="calc-result" style="background: transparent;">
+                            <div class="label">Low</div>
+                            <div class="value" id="ml-survive-low" style="font-size: 20px;">--</div>
+                        </div>
+                        <div class="calc-result" style="background: transparent;">
+                            <div class="label">Mid</div>
+                            <div class="value" id="ml-survive-mid" style="font-size: 20px;">--</div>
+                        </div>
+                        <div class="calc-result" style="background: transparent;">
+                            <div class="label">High</div>
+                            <div class="value" id="ml-survive-high" style="font-size: 20px;">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="ml-loading" style="display: none; text-align: center; padding: 40px; color: #888;">
+                <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
+                Running ML inference...
+            </div>
+            <div id="ml-error" style="display: none; text-align: center; padding: 20px; color: #ef5350; background: rgba(239, 83, 80, 0.1); border-radius: 8px;">
+            </div>
+        </div>
+
         <!-- Value Calculator -->
         <div class="calculator">
-            <h2>Case Value Estimator</h2>
+            <h2>📊 Rule-Based Case Value Estimator</h2>
             <div class="calc-grid">
                 <div class="calc-field">
                     <label>Cause of Action</label>
@@ -790,6 +924,117 @@
 
         // Initialize
         calculateValue();
+
+        // ML Prediction
+        async function runMLPrediction() {
+            const court = document.getElementById('ml-court').value;
+            const nos = document.getElementById('ml-nos').value;
+            const defendant = document.getElementById('ml-defendant').value;
+            const classAction = document.getElementById('ml-class-action').value;
+
+            // Show loading, hide results
+            document.getElementById('ml-loading').style.display = 'block';
+            document.getElementById('ml-results').style.display = 'none';
+            document.getElementById('ml-error').style.display = 'none';
+
+            try {
+                const params = new URLSearchParams({
+                    court: court,
+                    nos: nos,
+                    defendant: defendant,
+                    class_action: classAction
+                });
+
+                const response = await fetch(`/v1/ml/predict?${params}`);
+                const data = await response.json();
+
+                document.getElementById('ml-loading').style.display = 'none';
+
+                if (data.error) {
+                    document.getElementById('ml-error').style.display = 'block';
+                    document.getElementById('ml-error').textContent = 'Error: ' + data.error;
+                    return;
+                }
+
+                // Display results
+                document.getElementById('ml-results').style.display = 'block';
+
+                // === OUTCOME PROBABILITY BAR ===
+                if (data.outcome_probabilities) {
+                    const probs = data.outcome_probabilities;
+                    document.getElementById('prob-dismissal').style.width = (probs.dismissal * 100) + '%';
+                    document.getElementById('prob-dismissal').textContent = probs.dismissal > 0.08 ? (probs.dismissal * 100).toFixed(0) + '%' : '';
+                    document.getElementById('prob-settlement').style.width = (probs.settlement * 100) + '%';
+                    document.getElementById('prob-settlement').textContent = probs.settlement > 0.08 ? (probs.settlement * 100).toFixed(0) + '%' : '';
+                    document.getElementById('prob-judgment').style.width = (probs.judgment * 100) + '%';
+                    document.getElementById('prob-judgment').textContent = probs.judgment > 0.08 ? (probs.judgment * 100).toFixed(0) + '%' : '';
+                    document.getElementById('prob-trial').style.width = (probs.trial * 100) + '%';
+                    document.getElementById('prob-trial').textContent = probs.trial > 0.08 ? (probs.trial * 100).toFixed(0) + '%' : '';
+                }
+
+                // === DISMISSAL RISK ===
+                const dismissalPct = (data.dismissal_probability * 100).toFixed(1);
+                document.getElementById('ml-dismissal').textContent = dismissalPct + '%';
+                document.getElementById('ml-dismissal').style.color = data.dismissal_probability > 0.5 ? '#ef5350' : '#66bb6a';
+                if (data.dismissal_confidence) {
+                    document.getElementById('ml-dismissal-conf').textContent =
+                        '95% CI: ' + (data.dismissal_confidence[0] * 100).toFixed(0) + '-' + (data.dismissal_confidence[1] * 100).toFixed(0) + '%';
+                }
+
+                // === SETTLEMENT PROBABILITY ===
+                const settlementPct = data.outcome_probabilities?.settlement || 0;
+                document.getElementById('ml-settlement').textContent = (settlementPct * 100).toFixed(1) + '%';
+                const survivalPct = data.survival_probability || (1 - data.dismissal_probability);
+                document.getElementById('ml-survival').textContent = 'Survival: ' + (survivalPct * 100).toFixed(0) + '%';
+
+                // === DURATION ===
+                if (data.predicted_duration_days && data.predicted_duration_days.mid) {
+                    const days = Math.round(data.predicted_duration_days.mid);
+                    const months = Math.round(days / 30);
+                    document.getElementById('ml-duration').textContent = months + ' mo';
+                    document.getElementById('ml-duration-range').textContent =
+                        Math.round(data.predicted_duration_days.low) + '-' + Math.round(data.predicted_duration_days.high) + ' days';
+                }
+
+                // === CONFIDENCE ===
+                const conf = data.confidence || 'medium';
+                document.getElementById('ml-confidence').textContent = conf.charAt(0).toUpperCase() + conf.slice(1);
+                document.getElementById('ml-confidence').style.color =
+                    conf === 'high' ? '#66bb6a' : conf === 'low' ? '#ef5350' : '#ffa726';
+                document.getElementById('ml-version').textContent = (data.model_version || 'v1.0.0') + ' / ' + (data.backend || 'onnx');
+
+                // === VALUE ESTIMATES (Risk-Adjusted) ===
+                if (data.value_estimate) {
+                    document.getElementById('ml-value-low').textContent = formatMLCurrency(data.value_estimate.low);
+                    document.getElementById('ml-value-mid').textContent = formatMLCurrency(data.value_estimate.mid);
+                    document.getElementById('ml-value-high').textContent = formatMLCurrency(data.value_estimate.high);
+
+                    // If survives values
+                    if (data.value_estimate.if_survives) {
+                        document.getElementById('ml-survive-low').textContent = formatMLCurrency(data.value_estimate.if_survives.low);
+                        document.getElementById('ml-survive-mid').textContent = formatMLCurrency(data.value_estimate.if_survives.mid);
+                        document.getElementById('ml-survive-high').textContent = formatMLCurrency(data.value_estimate.if_survives.high);
+                    }
+                }
+
+            } catch (err) {
+                document.getElementById('ml-loading').style.display = 'none';
+                document.getElementById('ml-error').style.display = 'block';
+                document.getElementById('ml-error').textContent = 'Network error: ' + err.message;
+            }
+        }
+
+        function formatMLCurrency(value) {
+            if (!value) return '--';
+            if (value >= 1e9) {
+                return '$' + (value / 1e9).toFixed(1) + 'B';
+            } else if (value >= 1e6) {
+                return '$' + (value / 1e6).toFixed(1) + 'M';
+            } else if (value >= 1e3) {
+                return '$' + (value / 1e3).toFixed(0) + 'K';
+            }
+            return '$' + value.toFixed(0);
+        }
     </script>
 </body>
 </html>

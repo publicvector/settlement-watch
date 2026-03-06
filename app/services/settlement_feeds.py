@@ -20,33 +20,15 @@ logger = logging.getLogger(__name__)
 SETTLEMENT_FEEDS = [
     {
         "name": "DOJ Press Releases",
-        "url": "https://www.justice.gov/feeds/opa/justice-news.xml",
+        "url": "https://www.justice.gov/feeds/justice-news.xml",
         "source": "DOJ Feed",
         "default_category": "Government",
-    },
-    {
-        "name": "FTC Press Releases",
-        "url": "https://www.ftc.gov/feeds/press-releases.xml",
-        "source": "FTC Feed",
-        "default_category": "Consumer Protection",
-    },
-    {
-        "name": "SEC Litigation Releases",
-        "url": "https://www.sec.gov/rss/litigation/litreleases.xml",
-        "source": "SEC Feed",
-        "default_category": "Securities",
     },
     {
         "name": "CFPB Newsroom",
         "url": "https://www.consumerfinance.gov/about-us/newsroom/feed/",
         "source": "CFPB Feed",
         "default_category": "Consumer Protection",
-    },
-    {
-        "name": "EPA Enforcement",
-        "url": "https://www.epa.gov/feeds/press-releases-702.xml",
-        "source": "EPA Feed",
-        "default_category": "Environmental",
     },
 ]
 

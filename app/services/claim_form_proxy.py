@@ -89,6 +89,39 @@ _AGGREGATOR_DOMAINS = {
 }
 
 
+def _is_cloudflare_challenge(form_tag, soup: BeautifulSoup) -> bool:
+    """Detect Cloudflare challenge/turnstile pages that aren't real claim forms."""
+    # Check form action pointing to Cloudflare
+    action = (form_tag.get("action") or "").lower()
+    if "challenges.cloudflare.com" in action or "cdn-cgi/challenge" in action:
+        return True
+
+    # Check for cf- prefixed class names or IDs in the form
+    form_html = str(form_tag).lower()
+    if re.search(r'(?:class|id)\s*=\s*"[^"]*cf-', form_html):
+        return True
+
+    # Check for Cloudflare challenge script tags anywhere on the page
+    for script in soup.find_all("script"):
+        src = (script.get("src") or "").lower()
+        if "challenges.cloudflare.com" in src or "cdn-cgi/challenge" in src:
+            return True
+        text = (script.string or "").lower()
+        if "cf_chl_opt" in text or "cloudflare" in text and "challenge" in text:
+            return True
+
+    # Check for turnstile widget
+    if soup.find(attrs={"class": re.compile(r"cf-turnstile", re.IGNORECASE)}):
+        return True
+
+    # Check page title
+    title = soup.find("title")
+    if title and "just a moment" in title.get_text().lower():
+        return True
+
+    return False
+
+
 def _parse_form_from_soup(soup: BeautifulSoup, page_url: str) -> Optional[Dict[str, Any]]:
     """
     Extract form fields from a BeautifulSoup object.
@@ -96,6 +129,11 @@ def _parse_form_from_soup(soup: BeautifulSoup, page_url: str) -> Optional[Dict[s
     """
     form = soup.find("form")
     if not form:
+        return None
+
+    # Reject Cloudflare challenge pages (bot-check forms, not real claim forms)
+    if _is_cloudflare_challenge(form, soup):
+        logger.debug("Rejected Cloudflare challenge page: %s", page_url)
         return None
 
     action = form.get("action", "")
@@ -370,26 +408,39 @@ def fetch_and_parse_form(claim_url: str) -> Dict[str, Any]:
     }
 
 
+def _match_profile_key(text: str) -> Optional[str]:
+    """Try to match a text string to a profile key via the reverse map."""
+    normalized = _normalize_field_name(text)
+    matched = _REVERSE_MAP.get(normalized)
+    if matched:
+        return matched
+    for alias, pkey in _REVERSE_MAP.items():
+        if alias in normalized or normalized in alias:
+            return pkey
+    return None
+
+
 def map_profile_to_fields(
     fields: List[Dict[str, Any]], profile: Dict[str, Any]
 ) -> List[Dict[str, Any]]:
     """
-    Map profile data onto form fields using fuzzy field-name matching.
+    Map profile data onto form fields using fuzzy matching on
+    field name, label, and placeholder.
     Returns the fields list with `value` populated where a match is found.
     """
     if not profile:
         return fields
 
     for field in fields:
-        normalized = _normalize_field_name(field["name"])
-        # Check direct match first
-        matched_key = _REVERSE_MAP.get(normalized)
-        if not matched_key:
-            # Check if normalized name contains any alias
-            for alias, pkey in _REVERSE_MAP.items():
-                if alias in normalized or normalized in alias:
-                    matched_key = pkey
-                    break
+        matched_key = None
+        # Try field name first
+        matched_key = _match_profile_key(field["name"])
+        # Try label text (e.g. "First Name" from Gravity Forms labels)
+        if not matched_key and field.get("label"):
+            matched_key = _match_profile_key(field["label"])
+        # Try placeholder text
+        if not matched_key and field.get("placeholder"):
+            matched_key = _match_profile_key(field["placeholder"])
         if matched_key and profile.get(matched_key):
             field["value"] = profile[matched_key]
             field["auto_filled"] = True

@@ -743,6 +743,844 @@ def _scrape_jnd(session: requests.Session) -> List[Dict]:
 
 
 # ---------------------------------------------------------------------------
+# Playwright-based scrapers – sites that block plain requests
+# ---------------------------------------------------------------------------
+
+def _scrape_topclassactions(session: requests.Session) -> List[Dict]:
+    """Scrape TopClassActions.com open settlements using Playwright.
+
+    The site returns 403 for plain requests but works with headless Chromium.
+    Fetches the open-settlements listing, extracts article links, and follows
+    each article to find claim form URLs via extract_claim_url().
+    """
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        logger.warning("Playwright not installed, skipping TopClassActions")
+        return []
+
+    results = []
+    seen_urls: set = set()
+
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(
+                user_agent=(
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                ),
+            )
+            page = context.new_page()
+
+            # Fetch the open settlements listing (URL structure changed over time)
+            listing_urls = [
+                "https://topclassactions.com/category/lawsuit-settlements/open-lawsuit-settlements/",
+                "https://topclassactions.com/category/open-settlements/",
+            ]
+            listing_soup = None
+            for listing_url in listing_urls:
+                try:
+                    page.goto(listing_url, wait_until="domcontentloaded", timeout=25000)
+                    page.wait_for_timeout(3000)
+                    listing_html = page.content()
+                    soup_candidate = BeautifulSoup(listing_html, "html.parser")
+                    title_tag = soup_candidate.find("title")
+                    if title_tag and "not found" in title_tag.get_text().lower():
+                        continue
+                    listing_soup = soup_candidate
+                    break
+                except Exception:
+                    continue
+
+            if not listing_soup:
+                logger.warning("TopClassActions: could not load listing page")
+                context.close()
+                browser.close()
+                return results
+
+            # Extract article links — match settlement article paths
+            article_links = []
+            for a in listing_soup.find_all("a", href=True):
+                href = a["href"]
+                # Match article paths like /lawsuit-settlement/..., individual post URLs
+                if not re.search(r"/lawsuit-settlement/|/settlement/|/open-lawsuit-settlement", href):
+                    continue
+                # Skip category/tag listing pages
+                if re.search(r"/category/|/tag/|/page/\d", href):
+                    continue
+                title = a.get_text(strip=True)
+                if not title or len(title) < 10:
+                    continue
+                if href in seen_urls:
+                    continue
+                seen_urls.add(href)
+                if not href.startswith("http"):
+                    href = "https://topclassactions.com" + href
+                article_links.append((href, title))
+
+            logger.info("TopClassActions: found %d article links", len(article_links))
+
+            # Follow each article to extract claim URLs (limit to first 30)
+            for article_url, title in article_links[:30]:
+                text = title
+                claim_url = None
+                try:
+                    page.goto(article_url, wait_until="domcontentloaded", timeout=20000)
+                    page.wait_for_timeout(2000)
+                    article_html = page.content()
+                    article_soup = BeautifulSoup(article_html, "html.parser")
+                    text = article_soup.get_text(" ", strip=True)[:500]
+                    claim_url = extract_claim_url(article_soup, article_url)
+                except Exception as e:
+                    logger.debug("TopClassActions article fetch failed for %s: %s", article_url, e)
+
+                amount, formatted = extract_amount(text)
+                deadline = extract_deadline(text)
+                entry = {
+                    "title": title[:200],
+                    "amount": amount,
+                    "amount_formatted": formatted,
+                    "url": article_url,
+                    "description": text[:300] if text != title else "",
+                    "category": categorize_settlement(title, text, "TopClassActions"),
+                    "source": "TopClassActions",
+                    "pub_date": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+                    "guid": f"tca-{article_url[-60:]}" if article_url else f"tca-{title[:40]}",
+                    "claim_deadline": deadline,
+                }
+                if claim_url:
+                    entry["claim_url"] = claim_url
+                results.append(entry)
+
+            context.close()
+            browser.close()
+    except Exception as e:
+        logger.warning("TopClassActions scraper failed: %s", e)
+
+    return results
+
+
+def _scrape_claimdepot(session: requests.Session) -> List[Dict]:
+    """Scrape ClaimDepot.com settlement listings."""
+    results = []
+    seen_urls: set = set()
+    soup = _get(session, "https://www.claimdepot.com/")
+    if not soup:
+        return results
+
+    # Look for settlement cards/listings — try common container patterns
+    containers = soup.find_all(
+        ["article", "div", "li", "a"],
+        class_=re.compile(r"settlement|claim|card|listing|post|item", re.IGNORECASE),
+    )
+    # Fallback: if no class-matched containers, scan all links
+    if not containers:
+        containers = soup.find_all("a", href=True)
+
+    for item in containers[:50]:
+        # Find the primary link
+        if item.name == "a":
+            link = item
+        else:
+            link = item.find("a", href=True)
+        if not link:
+            continue
+
+        href = link.get("href", "")
+        if not href or href == "/":
+            continue
+        if not href.startswith("http"):
+            href = "https://www.claimdepot.com" + href
+
+        # Skip nav/footer links
+        if any(skip in href.lower() for skip in ["/about", "/contact", "/privacy", "/terms", "/faq", "/login"]):
+            continue
+
+        if href in seen_urls:
+            continue
+        seen_urls.add(href)
+
+        title_el = item.find(["h2", "h3", "h4", "h5"]) if item.name != "a" else None
+        title = title_el.get_text(strip=True) if title_el else link.get_text(strip=True)
+        if not title or len(title) < 5:
+            continue
+
+        text = item.get_text(" ", strip=True) if item.name != "a" else title
+        amount, formatted = extract_amount(text)
+        deadline = extract_deadline(text)
+
+        results.append({
+            "title": title[:200],
+            "amount": amount,
+            "amount_formatted": formatted,
+            "url": href,
+            "description": text[:300] if text != title else "",
+            "category": categorize_settlement(title, text, "ClaimDepot"),
+            "source": "ClaimDepot",
+            "pub_date": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+            "guid": f"cd-{href[-60:]}" if href else f"cd-{title[:40]}",
+            "claim_deadline": deadline,
+        })
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Additional settlement administrator + aggregator scrapers
+# ---------------------------------------------------------------------------
+
+def _scrape_lawyers_and_settlements(session: requests.Session) -> List[Dict]:
+    """Scrape LawyersAndSettlements.com — paginated HTML settlement listings."""
+    results = []
+    seen_urls: set = set()
+
+    for page_num in range(1, 6):  # first 5 pages
+        url = f"https://www.lawyersandsettlements.com/settlements/all/?page={page_num}"
+        soup = _get(session, url)
+        if not soup:
+            break
+
+        found_any = False
+        for li in soup.find_all("li"):
+            a = li.find("a", href=True)
+            if not a:
+                continue
+            href = a.get("href", "")
+            if "/settlements/" not in href or not href.endswith(".html"):
+                continue
+            title = a.get_text(strip=True)
+            if not title or len(title) < 5:
+                continue
+            if not href.startswith("http"):
+                href = "https://www.lawyersandsettlements.com" + href
+            if href in seen_urls:
+                continue
+            seen_urls.add(href)
+            found_any = True
+
+            text = li.get_text(" ", strip=True)
+            amount, formatted = extract_amount(text)
+            # Extract date from <span class="date">
+            date_span = li.find("span", class_="date")
+            date_text = date_span.get_text(strip=True).strip("()") if date_span else ""
+
+            results.append({
+                "title": title[:200],
+                "amount": amount,
+                "amount_formatted": formatted,
+                "url": href,
+                "description": text[:300] if text != title else "",
+                "category": categorize_settlement(title, text, "LawyersAndSettlements"),
+                "source": "LawyersAndSettlements",
+                "pub_date": date_text or datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+                "guid": f"las-{href[-60:]}" if href else f"las-{title[:40]}",
+            })
+
+        if not found_any:
+            break
+        time.sleep(0.5)
+
+    return results
+
+
+def _scrape_simpluris(session: requests.Session) -> List[Dict]:
+    """Scrape Simpluris open settlements via WP REST API and case search page."""
+    results = []
+    seen_titles: set = set()
+
+    # 1. WP REST API for case studies
+    try:
+        resp = session.get(
+            "https://www.simpluris.com/wp-json/wp/v2/case-study",
+            params={"per_page": 100},
+            timeout=20,
+        )
+        if resp.status_code == 200:
+            for item in resp.json():
+                title = BeautifulSoup(item.get("title", {}).get("rendered", ""), "html.parser").get_text(strip=True)
+                if not title or title in seen_titles:
+                    continue
+                seen_titles.add(title)
+                link = item.get("link", "")
+                content = BeautifulSoup(item.get("content", {}).get("rendered", ""), "html.parser").get_text(" ", strip=True)
+                amount, formatted = extract_amount(f"{title} {content}")
+                results.append({
+                    "title": title[:200],
+                    "amount": amount,
+                    "amount_formatted": formatted,
+                    "url": link,
+                    "description": content[:300],
+                    "category": categorize_settlement(title, content, "Simpluris"),
+                    "source": "Simpluris",
+                    "pub_date": item.get("date", datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000")),
+                    "guid": f"simp-{link[-60:]}" if link else f"simp-{title[:40]}",
+                })
+    except Exception as e:
+        logger.debug("Simpluris REST API failed: %s", e)
+
+    # 2. Representative cases page — plain text listings
+    soup = _get(session, "https://www.simpluris.com/representative-cases/")
+    if soup:
+        for div in soup.find_all("div", class_=re.compile(r"fl-rich-text")):
+            for p in div.find_all("p"):
+                text = p.get_text(" ", strip=True)
+                # Each line is typically a case name
+                for line in text.split("\n"):
+                    line = line.strip()
+                    if len(line) < 10 or line in seen_titles:
+                        continue
+                    # Skip category headers
+                    if line.endswith(":") or line.isupper():
+                        continue
+                    seen_titles.add(line)
+                    amount, formatted = extract_amount(line)
+                    results.append({
+                        "title": line[:200],
+                        "amount": amount,
+                        "amount_formatted": formatted,
+                        "url": "https://www.simpluris.com/representative-cases/",
+                        "description": "",
+                        "category": categorize_settlement(line, "", "Simpluris"),
+                        "source": "Simpluris",
+                        "pub_date": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+                        "guid": f"simp-{line[:60]}",
+                    })
+
+    return results
+
+
+def _scrape_angeion(session: requests.Session) -> List[Dict]:
+    """Scrape Angeion Group homepage for active case cards."""
+    results = []
+    soup = _get(session, "https://www.angeiongroup.com/")
+    if not soup:
+        return results
+
+    # Active mass tort cards
+    for card in soup.find_all("div", class_=re.compile(r"active-mass-torts|card-01_content|case-card")):
+        title_el = card.find(["h2", "h3", "h4", "h5", "a", "p"])
+        if not title_el:
+            continue
+        title = title_el.get_text(strip=True)
+        if not title or len(title) < 3:
+            continue
+        text = card.get_text(" ", strip=True)
+        link = card.find("a", href=True)
+        href = link.get("href", "") if link else ""
+        if href and not href.startswith("http"):
+            href = "https://www.angeiongroup.com" + href
+        amount, formatted = extract_amount(text)
+        results.append({
+            "title": title[:200],
+            "amount": amount,
+            "amount_formatted": formatted,
+            "url": href or "https://www.angeiongroup.com/",
+            "description": text[:300] if text != title else "",
+            "category": categorize_settlement(title, text, "Angeion Group"),
+            "source": "Angeion Group",
+            "pub_date": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+            "guid": f"ang-{href[-60:]}" if href else f"ang-{title[:40]}",
+        })
+
+    # Also check /cases or /class-action for case listings
+    for path in ["/class-action", "/cases"]:
+        case_soup = _get(session, f"https://www.angeiongroup.com{path}")
+        if not case_soup:
+            continue
+        for a in case_soup.find_all("a", href=True):
+            href = a["href"]
+            text = a.get_text(strip=True)
+            if len(text) < 10:
+                continue
+            # Look for links to external settlement sites
+            if not href.startswith("http"):
+                href = "https://www.angeiongroup.com" + href
+            from urllib.parse import urlparse as _urlparse
+            domain = _urlparse(href).netloc.lower()
+            if "angeiongroup.com" in domain:
+                continue  # skip internal nav links
+            if any(kw in domain for kw in ["settlement", "claim", "classaction"]):
+                amount, formatted = extract_amount(text)
+                results.append({
+                    "title": text[:200],
+                    "amount": amount,
+                    "amount_formatted": formatted,
+                    "url": href,
+                    "description": "",
+                    "category": categorize_settlement(text, "", "Angeion Group"),
+                    "source": "Angeion Group",
+                    "pub_date": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+                    "guid": f"ang-{href[-60:]}",
+                })
+
+    return results
+
+
+def _scrape_epiq(session: requests.Session) -> List[Dict]:
+    """Scrape Epiq Global cases via their public API endpoints.
+
+    The main search at dm.epiq11.com is an Angular SPA, but some API
+    endpoints are accessible without auth.
+    """
+    results = []
+    seen: set = set()
+    base = "https://dm.epiq11.com"
+
+    # Get list of industries to use as search facets
+    industries = []
+    try:
+        resp = session.get(f"{base}/api/search/getindustry", timeout=15)
+        if resp.status_code == 200:
+            industries = resp.json()
+    except Exception:
+        pass
+
+    # Try the public cases page — even though it's an SPA, the initial HTML
+    # may have case data or we can try known project codes
+    # Use Playwright if available to render the SPA
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        logger.debug("Playwright not available for Epiq SPA rendering")
+        return results
+
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(
+                user_agent=(
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                ),
+            )
+            page = context.new_page()
+            page.goto(f"{base}/search/searchcases", wait_until="domcontentloaded", timeout=25000)
+            page.wait_for_timeout(5000)
+
+            # Wait for case cards to render
+            try:
+                page.wait_for_selector(".case-card, .card, [class*='case']", timeout=10000)
+            except Exception:
+                pass
+
+            html = page.content()
+            soup = BeautifulSoup(html, "html.parser")
+
+            # Look for case cards/links
+            for a in soup.find_all("a", href=True):
+                href = a["href"]
+                text = a.get_text(strip=True)
+                if not text or len(text) < 5:
+                    continue
+                # Match case detail links
+                if not re.search(r"/case/|/cases/|projectCode=", href, re.IGNORECASE):
+                    continue
+                if text in seen:
+                    continue
+                seen.add(text)
+                if not href.startswith("http"):
+                    href = base + href
+                amount, formatted = extract_amount(text)
+                results.append({
+                    "title": text[:200],
+                    "amount": amount,
+                    "amount_formatted": formatted,
+                    "url": href,
+                    "description": "",
+                    "category": categorize_settlement(text, "", "Epiq"),
+                    "source": "Epiq",
+                    "pub_date": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+                    "guid": f"epiq-{href[-60:]}" if href else f"epiq-{text[:40]}",
+                })
+
+            context.close()
+            browser.close()
+    except Exception as e:
+        logger.warning("Epiq scraper failed: %s", e)
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# FTC Refunds + State AG scrapers
+# ---------------------------------------------------------------------------
+
+_SETTLE_KEYWORDS = ['settle', 'pay', 'penalty', 'million', 'billion', 'judgment',
+                    'fine', 'consent', 'refund', 'restitution', 'fraud', 'consumer']
+
+
+def _scrape_ftc_refunds(session: requests.Session) -> List[Dict]:
+    """Scrape FTC active refund programs — these have direct claim/refund links."""
+    results = []
+    soup = _get(session, "https://www.ftc.gov/enforcement/refunds")
+    if not soup:
+        return results
+
+    # Target the refund listing view
+    container = soup.find("div", class_=re.compile(r"view-refund-index|view-content")) or soup
+    for article in container.find_all(["article", "div", "li"], class_=re.compile(r"node|item|row|refund"))[:50]:
+        title_el = article.find(["h2", "h3", "h4", "a"])
+        if not title_el:
+            continue
+        title = title_el.get_text(strip=True)
+        if not title or len(title) < 5:
+            continue
+        text = article.get_text(" ", strip=True)
+        link = article.find("a", href=True)
+        href = link.get("href", "") if link else ""
+        if href and not href.startswith("http"):
+            href = "https://www.ftc.gov" + href
+        amount, formatted = extract_amount(text)
+        deadline = extract_deadline(text)
+        results.append({
+            "title": title[:200],
+            "amount": amount,
+            "amount_formatted": formatted,
+            "url": href,
+            "description": text[:300] if text != title else "",
+            "category": "Consumer Protection",
+            "source": "FTC Refunds",
+            "pub_date": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+            "guid": f"ftcr-{href[-60:]}" if href else f"ftcr-{title[:40]}",
+            "claim_deadline": deadline,
+        })
+    return results
+
+
+def _scrape_tx_ag(session: requests.Session) -> List[Dict]:
+    """Scrape Texas Attorney General press releases (settlements category)."""
+    results = []
+    for url in [
+        "https://www.texasattorneygeneral.gov/news/categories/settlements",
+        "https://www.texasattorneygeneral.gov/news",
+    ]:
+        soup = _get(session, url)
+        if not soup:
+            continue
+        for card in soup.find_all(["div", "article", "li"], class_=re.compile(r"card|news|item|press|post"))[:30]:
+            title_el = card.find(["h2", "h3", "h4", "a"])
+            if not title_el:
+                continue
+            title = title_el.get_text(strip=True)
+            text = card.get_text(" ", strip=True)
+            if not any(kw in text.lower() for kw in _SETTLE_KEYWORDS):
+                continue
+            link = card.find("a", href=True)
+            href = link.get("href", "") if link else ""
+            if href and not href.startswith("http"):
+                href = "https://www.texasattorneygeneral.gov" + href
+            amount, formatted = extract_amount(text)
+            results.append({
+                "title": title[:200],
+                "amount": amount,
+                "amount_formatted": formatted,
+                "url": href,
+                "description": text[:300] if text != title else "",
+                "category": categorize_settlement(title, text, "TX Attorney General"),
+                "source": "TX AG",
+                "pub_date": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+                "guid": f"txag-{href[-60:]}" if href else f"txag-{title[:40]}",
+            })
+    return results
+
+
+def _scrape_fl_ag(session: requests.Session) -> List[Dict]:
+    """Scrape Florida Attorney General news releases."""
+    results = []
+    soup = _get(session, "https://www.myfloridalegal.com/newsreleases")
+    if not soup:
+        return results
+    container = soup.find("section", class_=re.compile(r"news")) or soup
+    for item in container.find_all(["article", "div", "li", "a"], class_=re.compile(r"news|item|release|press|card"))[:30]:
+        if item.name == "a":
+            link = item
+        else:
+            link = item.find("a", href=True)
+        if not link:
+            continue
+        title = link.get_text(strip=True)
+        if not title or len(title) < 10:
+            continue
+        text = item.get_text(" ", strip=True) if item.name != "a" else title
+        if not any(kw in text.lower() for kw in _SETTLE_KEYWORDS):
+            continue
+        href = link.get("href", "")
+        if href and not href.startswith("http"):
+            href = "https://www.myfloridalegal.com" + href
+        amount, formatted = extract_amount(text)
+        results.append({
+            "title": title[:200],
+            "amount": amount,
+            "amount_formatted": formatted,
+            "url": href,
+            "description": text[:300] if text != title else "",
+            "category": categorize_settlement(title, text, "FL Attorney General"),
+            "source": "FL AG",
+            "pub_date": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+            "guid": f"flag-{href[-60:]}" if href else f"flag-{title[:40]}",
+        })
+    return results
+
+
+def _scrape_wa_ag(session: requests.Session) -> List[Dict]:
+    """Scrape Washington Attorney General news."""
+    results = []
+    soup = _get(session, "https://www.atg.wa.gov/news")
+    if not soup:
+        return results
+    for item in soup.find_all(["article", "div", "li"], class_=re.compile(r"news|item|views-row|press"))[:30]:
+        title_el = item.find(["h2", "h3", "h4", "a"])
+        if not title_el:
+            continue
+        title = title_el.get_text(strip=True)
+        text = item.get_text(" ", strip=True)
+        if not any(kw in text.lower() for kw in _SETTLE_KEYWORDS):
+            continue
+        link = item.find("a", href=True)
+        href = link.get("href", "") if link else ""
+        if href and not href.startswith("http"):
+            href = "https://www.atg.wa.gov" + href
+        amount, formatted = extract_amount(text)
+        results.append({
+            "title": title[:200],
+            "amount": amount,
+            "amount_formatted": formatted,
+            "url": href,
+            "description": text[:300] if text != title else "",
+            "category": categorize_settlement(title, text, "WA Attorney General"),
+            "source": "WA AG",
+            "pub_date": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+            "guid": f"waag-{href[-60:]}" if href else f"waag-{title[:40]}",
+        })
+    return results
+
+
+def _scrape_oh_ag(session: requests.Session) -> List[Dict]:
+    """Scrape Ohio Attorney General news releases."""
+    results = []
+    soup = _get(session, "https://www.ohioattorneygeneral.gov/Media/News-Releases")
+    if not soup:
+        return results
+    for item in soup.find_all("div", class_=re.compile(r"ohio-news|news-item"))[:30]:
+        title_el = item.find(["h2", "h3", "h4", "a"])
+        if not title_el:
+            continue
+        title = title_el.get_text(strip=True)
+        text = item.get_text(" ", strip=True)
+        if not any(kw in text.lower() for kw in _SETTLE_KEYWORDS):
+            continue
+        link = item.find("a", href=True)
+        href = link.get("href", "") if link else ""
+        if href and not href.startswith("http"):
+            href = "https://www.ohioattorneygeneral.gov" + href
+        amount, formatted = extract_amount(text)
+        results.append({
+            "title": title[:200],
+            "amount": amount,
+            "amount_formatted": formatted,
+            "url": href,
+            "description": text[:300] if text != title else "",
+            "category": categorize_settlement(title, text, "OH Attorney General"),
+            "source": "OH AG",
+            "pub_date": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+            "guid": f"ohag-{href[-60:]}" if href else f"ohag-{title[:40]}",
+        })
+    return results
+
+
+def _scrape_nj_ag(session: requests.Session) -> List[Dict]:
+    """Scrape New Jersey Attorney General news (WordPress/Divi)."""
+    results = []
+    seen_urls: set = set()
+    # Scrape first 3 pages
+    for page_num in range(1, 4):
+        url = "https://www.njoag.gov/news/" if page_num == 1 else f"https://www.njoag.gov/news/page/{page_num}/"
+        soup = _get(session, url)
+        if not soup:
+            break
+        found_any = False
+        for article in soup.find_all("article", class_=re.compile(r"et_pb_post|post"))[:15]:
+            title_el = article.find(["h2", "h3", "h4"])
+            if not title_el:
+                continue
+            title = title_el.get_text(strip=True)
+            text = article.get_text(" ", strip=True)
+            if not any(kw in text.lower() for kw in _SETTLE_KEYWORDS):
+                continue
+            link = title_el.find("a", href=True) or article.find("a", href=True)
+            href = link.get("href", "") if link else ""
+            if not href or href in seen_urls:
+                continue
+            seen_urls.add(href)
+            found_any = True
+            amount, formatted = extract_amount(text)
+            results.append({
+                "title": title[:200],
+                "amount": amount,
+                "amount_formatted": formatted,
+                "url": href,
+                "description": text[:300] if text != title else "",
+                "category": categorize_settlement(title, text, "NJ Attorney General"),
+                "source": "NJ AG",
+                "pub_date": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+                "guid": f"njag-{href[-60:]}" if href else f"njag-{title[:40]}",
+            })
+        if not found_any:
+            break
+        time.sleep(0.3)
+    return results
+
+
+def _scrape_ga_ag(session: requests.Session) -> List[Dict]:
+    """Scrape Georgia Attorney General press releases + settlements page."""
+    results = []
+    for url, base in [
+        ("https://law.georgia.gov/press-releases", "https://law.georgia.gov"),
+        ("https://law.georgia.gov/resources/settlements", "https://law.georgia.gov"),
+    ]:
+        soup = _get(session, url)
+        if not soup:
+            continue
+        for item in soup.find_all(["div", "article", "li"],
+                                   class_=re.compile(r"news-teaser|press|item|row|card"))[:30]:
+            title_el = item.find(["h2", "h3", "h4", "a"])
+            if not title_el:
+                continue
+            title = title_el.get_text(strip=True)
+            text = item.get_text(" ", strip=True)
+            if not any(kw in text.lower() for kw in _SETTLE_KEYWORDS):
+                continue
+            link = item.find("a", href=True)
+            href = link.get("href", "") if link else ""
+            if href and not href.startswith("http"):
+                href = base + href
+            amount, formatted = extract_amount(text)
+            results.append({
+                "title": title[:200],
+                "amount": amount,
+                "amount_formatted": formatted,
+                "url": href,
+                "description": text[:300] if text != title else "",
+                "category": categorize_settlement(title, text, "GA Attorney General"),
+                "source": "GA AG",
+                "pub_date": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+                "guid": f"gaag-{href[-60:]}" if href else f"gaag-{title[:40]}",
+            })
+    return results
+
+
+def _scrape_krazy_coupon_lady(session: requests.Session) -> List[Dict]:
+    """Scrape TheKrazyCouponLady class action settlements page.
+
+    This aggregator curates consumer settlements and links to direct claim
+    form URLs — many of which are simple HTML forms amenable to auto-fill.
+    """
+    results = []
+    url = "https://thekrazycouponlady.com/tips/money/unclaimed-money-class-action-settlements"
+    soup = _get(session, url)
+    if not soup:
+        return results
+
+    # Look for settlement entries — typically <h2>/<h3> headings with links
+    for heading in soup.find_all(["h2", "h3", "h4"]):
+        title = heading.get_text(strip=True)
+        if not title or len(title) < 5:
+            continue
+        # Skip non-settlement headings
+        title_lower = title.lower()
+        if any(skip in title_lower for skip in ["table of contents", "how to", "what is", "faq", "related"]):
+            continue
+
+        # Gather links from the section following this heading
+        claim_url = ""
+        description = ""
+        sibling = heading.find_next_sibling()
+        section_text = ""
+        for _ in range(5):  # scan up to 5 siblings
+            if sibling is None or sibling.name in ("h2", "h3"):
+                break
+            section_text += " " + sibling.get_text(" ", strip=True)
+            for a in sibling.find_all("a", href=True):
+                href = a["href"]
+                atext = a.get_text(strip=True).lower()
+                if any(kw in atext for kw in ["file a claim", "claim form", "submit a claim", "file claim",
+                                               "claim here", "submit claim", "file your claim"]):
+                    claim_url = href
+                    break
+                if any(kw in href.lower() for kw in ["/claim", "submit-claim", "file-claim", "claimform"]):
+                    claim_url = href
+            sibling = sibling.find_next_sibling() if sibling else None
+
+        if not claim_url:
+            continue
+
+        amount, formatted = extract_amount(title + " " + section_text)
+        description = section_text.strip()[:300]
+        results.append({
+            "title": title[:200],
+            "amount": amount,
+            "amount_formatted": formatted,
+            "url": claim_url,
+            "claim_url": claim_url,
+            "description": description,
+            "category": categorize_settlement(title, description),
+            "source": "KrazyCouponLady",
+            "pub_date": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+            "guid": f"kcl-{claim_url[-60:]}",
+        })
+    return results
+
+
+def _scrape_fileyourclaim(session: requests.Session) -> List[Dict]:
+    """Scrape FileYourClaim.co — curated open settlements with claim links.
+
+    Page uses ``s-card`` divs with ``s-card-company`` for name,
+    ``s-card-desc`` for description, ``s-card-claim > a`` for claim URL.
+    """
+    results = []
+    url = "https://fileyourclaim.co/"
+    soup = _get(session, url)
+    if not soup:
+        return results
+
+    seen_urls: set = set()
+    for card in soup.find_all("div", class_=re.compile(r"settlement-item")):
+        company_el = card.find(class_="s-card-company")
+        if not company_el:
+            continue
+        title = company_el.get_text(strip=True)
+        if not title or len(title) < 5:
+            continue
+
+        desc_el = card.find(class_="s-card-desc")
+        description = desc_el.get_text(strip=True)[:300] if desc_el else ""
+
+        claim_el = card.find(class_="s-card-claim")
+        claim_link = claim_el.find("a", href=True) if claim_el else None
+        claim_url = claim_link["href"] if claim_link else ""
+        if not claim_url or claim_url in seen_urls:
+            continue
+        seen_urls.add(claim_url)
+
+        text = card.get_text(" ", strip=True)
+        amount, formatted = extract_amount(text)
+        results.append({
+            "title": title[:200],
+            "amount": amount,
+            "amount_formatted": formatted,
+            "url": claim_url,
+            "claim_url": claim_url,
+            "description": description,
+            "category": categorize_settlement(title, description),
+            "source": "FileYourClaim",
+            "pub_date": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000"),
+            "guid": f"fyc-{claim_url[-60:]}",
+        })
+    return results
+
+
+# ---------------------------------------------------------------------------
 # Dorker – search engine queries via ddgs
 # ---------------------------------------------------------------------------
 
@@ -770,6 +1608,12 @@ QUICK_DORK_QUERIES = [
     '"data breach" "file a claim" "$" million 2026',
     '"data breach" "settlement" "claim form" 2026',
     '"data breach" "settlement" "claim form" 2025',
+    # Targeted queries for pages with actual fillable HTML forms
+    '"file a claim" "first name" "last name" "email"',
+    '"claim form" "submit" "name" "address" "email" settlement',
+    '"file your claim" settlement 2026',
+    '"online claim form" settlement',
+    'inurl:claim "first name" "email" settlement',
 ]
 
 
@@ -853,19 +1697,34 @@ def run_scrape() -> List[Dict]:
         ("ClassActionRebates", _scrape_classactionrebates),
         ("BigClassAction", _scrape_bigclassaction),
         ("JND Legal", _scrape_jnd),
+        ("TopClassActions", _scrape_topclassactions),
+        ("ClaimDepot", _scrape_claimdepot),
+        ("LawyersAndSettlements", _scrape_lawyers_and_settlements),
+        ("Angeion Group", _scrape_angeion),
+        ("Epiq", _scrape_epiq),
+        ("KrazyCouponLady", _scrape_krazy_coupon_lady),
+        ("FileYourClaim", _scrape_fileyourclaim),
     ]
 
-    # Direct scrapers — gov scrapers have no claim portals
+    # Direct scrapers — gov scrapers have no claim portals, Simpluris has case names only
     direct_scrapers = [
         ("ClassAction.org", _scrape_classaction_org),
         ("FTC", _scrape_ftc),
+        ("FTC Refunds", _scrape_ftc_refunds),
         ("SEC", _scrape_sec),
         ("DOJ", _scrape_doj),
         ("CFPB", _scrape_cfpb),
         ("EPA", _scrape_epa),
         ("CA AG", _scrape_ca_ag),
         ("NY AG", _scrape_ny_ag),
+        ("TX AG", _scrape_tx_ag),
+        ("FL AG", _scrape_fl_ag),
+        ("WA AG", _scrape_wa_ag),
+        ("OH AG", _scrape_oh_ag),
+        ("NJ AG", _scrape_nj_ag),
+        ("GA AG", _scrape_ga_ag),
         ("KCC", _scrape_kcc),
+        ("Simpluris", _scrape_simpluris),
     ]
 
     # Run enrichable scrapers and fetch detail pages for claim data
